@@ -10,6 +10,9 @@
           parse_var_sub/1 ]).
 
 
+%%%%%%%%%%%%
+%% Parser %%
+%%%%%%%%%%%%
 
 parse_program(Txt) when is_binary(Txt) ->
     parse_program(binary_to_list(Txt));
@@ -68,7 +71,7 @@ parse_braced([], Acc) ->
     {[], Acc, {error, missing_close_brace}};
 parse_braced([ ${ | Rem ], Acc) ->
     {NewRem, Inner} = parse_braced(Rem),
-    parse_braced(NewRem, lists:reverse(Inner) ++ Acc);
+    parse_braced(NewRem, "{" ++ lists:reverse(Inner) ++ "}" ++ Acc);
 parse_braced([ $} | Rem ], Acc) ->
     {Rem, {string, lists:reverse(Acc)}};
 parse_braced([ $\\ | [C|Rem] ], Acc) ->
