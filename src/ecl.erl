@@ -7,7 +7,9 @@
           parse_single_quoted/1,
           parse_unquoted/1,
           parse_cmd_sub/1,
-          parse_var_sub/1 ]).
+          parse_var_sub/1,
+        
+          interpret/1 ]).
 
 
 %%%%%%%%%%%%
