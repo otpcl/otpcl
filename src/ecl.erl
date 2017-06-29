@@ -137,6 +137,10 @@ parse_unquoted([], Acc) ->
     {ok, {string, lists:reverse(Acc)}, []};
 parse_unquoted([ $\s | Rem ], Acc) ->
     {ok, {string, lists:reverse(Acc)}, Rem};
+parse_unquoted(Rem = [ $; | _ ], Acc) ->
+    {ok, {string, lists:reverse(Acc)}, Rem};
+parse_unquoted(Rem = [ $\n | _ ], Acc) ->
+    {ok, {string, lists:reverse(Acc)}, Rem};
 parse_unquoted([ $[ | Rem ], Acc) ->
     {ok, CmdSub, NewRem} = parse_cmd_sub(Rem),
     parse_unquoted(NewRem, [CmdSub|Acc]);
@@ -190,6 +194,10 @@ parse_var_sub(Txt = [ $[ | _ ], Acc) ->
 parse_var_sub(Txt = [ $] | _ ], Acc) ->
     {ok, {var_sub, lists:reverse(Acc)}, Txt};
 parse_var_sub(Txt = [ $\s | _ ], Acc) ->
+    {ok, {var_sub, lists:reverse(Acc)}, Txt};
+parse_var_sub(Txt = [ $; | _ ], Acc) ->
+    {ok, {var_sub, lists:reverse(Acc)}, Txt};
+parse_var_sub(Txt = [ $\n | _ ], Acc) ->
     {ok, {var_sub, lists:reverse(Acc)}, Txt};
 parse_var_sub([ $\\ | [C|Rem] ], Acc) ->
     parse_var_sub(Rem, [C|Acc]);
