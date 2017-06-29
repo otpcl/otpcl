@@ -199,3 +199,11 @@ parse_var_sub([ C | Rem ], Acc) ->
 parse_braced_var_sub(Txt) ->
     {ok, {string, VarName}, Rem} = parse_braced(Txt),
     {ok, {var_sub, VarName}, Rem}.
+
+
+%%%%%%%%%%%%%%%%%
+%% Interpreter %%
+%%%%%%%%%%%%%%%%%
+
+interpret(_) ->
+    ok.
