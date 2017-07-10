@@ -109,7 +109,7 @@ parse_single_quoted(_) -> {error, invalid_input}.
 parse_single_quoted([], Acc) ->
     {error, missing_single_quote, Acc};
 parse_single_quoted([ $' | Rem ], Acc) ->
-    {ok, {string, lists:reverse(Acc)}, Rem};
+    {ok, {atom, lists:reverse(Acc)}, Rem};
 parse_single_quoted([ $[ | Rem ], Acc) ->
     {ok, CmdSub, NewRem} = parse_cmd_sub(Rem),
     parse_single_quoted(NewRem, [CmdSub|Acc]);
@@ -130,13 +130,13 @@ parse_unquoted(Txt) when is_list(Txt) ->
 parse_unquoted(_) -> {error, invalid_input}.
 
 parse_unquoted([], Acc) ->
-    {ok, {string, lists:reverse(Acc)}, []};
+    {ok, {atom, lists:reverse(Acc)}, []};
 parse_unquoted([ $\s | Rem ], Acc) ->
-    {ok, {string, lists:reverse(Acc)}, Rem};
+    {ok, {atom, lists:reverse(Acc)}, Rem};
 parse_unquoted(Rem = [ $; | _ ], Acc) ->
-    {ok, {string, lists:reverse(Acc)}, Rem};
+    {ok, {atom, lists:reverse(Acc)}, Rem};
 parse_unquoted(Rem = [ $\n | _ ], Acc) ->
-    {ok, {string, lists:reverse(Acc)}, Rem};
+    {ok, {atom, lists:reverse(Acc)}, Rem};
 parse_unquoted([ $[ | Rem ], Acc) ->
     {ok, CmdSub, NewRem} = parse_cmd_sub(Rem),
     parse_unquoted(NewRem, [CmdSub|Acc]);
