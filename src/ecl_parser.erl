@@ -100,6 +100,29 @@ parse_double_quoted([ C | Rem ], Acc) ->
 
 
 
+parse_backquoted(Txt) when is_binary(Txt) ->
+    parse_backquoted(binary_to_list(Txt));
+parse_backquoted(Txt) when is_list(Txt) ->
+    parse_backquoted(Txt, []);
+parse_backquoted(_) -> {error, invalid_input}.
+
+parse_backquoted([], Acc) ->
+    {error, missing_backquote, Acc};
+parse_backquoted([ $` | Rem ], Acc) ->
+    {ok, {charlist, lists:reverse(Acc)}, Rem};
+parse_backquoted([ $[ | Rem ], Acc) ->
+    {ok, CmdSub, NewRem} = parse_cmd_sub(Rem),
+    parse_backquoted(NewRem, [CmdSub|Acc]);
+parse_backquoted([ $$ | Rem ], Acc) ->
+    {ok, VarSub, NewRem} = parse_var_sub(Rem),
+    parse_backquoted(NewRem, [VarSub|Acc]);
+parse_backquoted([ $\\ | [C|Rem] ], Acc) ->
+    parse_backquoted(Rem, [C|Acc]);
+parse_backquoted([ C | Rem ], Acc) ->
+    parse_backquoted(Rem, [C|Acc]);
+
+
+
 parse_single_quoted(Txt) when is_binary(Txt) ->
     parse_single_quoted(binary_to_list(Txt));
 parse_single_quoted(Txt) when is_list(Txt) ->
