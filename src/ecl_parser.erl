@@ -70,6 +70,8 @@ parse_word(_) -> {error, invalid_input}.
 %    parse_tuple(Rem, Acc);
 %parse_word([ $( | Rem ], Acc) ->
 %    parse_list(Rem, Acc);
+parse_word([ $# | Rem ], Acc) ->
+    parse_comment(Rem, Acc);
 parse_word([ ${ | Rem ], Acc) ->
     parse_braced(Rem, Acc);
 parse_word([ $" | Rem ], Acc) ->
@@ -80,6 +82,21 @@ parse_word([ $' | Rem ], Acc) ->
     parse_single_quoted(Rem, Acc);
 parse_word(Rem, Acc) ->
     parse_unquoted(Rem, Acc).
+
+
+
+parse_comment(Txt) when is_binary(Txt) ->
+    parse_comment(binary_to_list(Txt));
+parse_comment(Txt) when is_list(Txt) ->
+    parse_comment(Txt, []);
+parse_comment(_) -> {error, invalid_input}.
+
+parse_comment([], Acc) ->
+    {ok, {comment, lists:reverse(Acc)}, []};
+parse_comment(Rem = [ $\n | _ ], Acc) ->
+    {ok, {comment, lists:reverse(Acc)}, Rem};
+parse_comment([ C | Rem ], Acc) ->
+    parse_comment(Rem, [C|Acc]).
 
 
 
