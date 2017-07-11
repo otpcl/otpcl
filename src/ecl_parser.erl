@@ -42,18 +42,32 @@ parse_command([ $\t | Rem ], Acc) ->
     parse_command(Rem, Acc);
 parse_command([ $\\ | [$\n | Rem] ], Acc) ->
     parse_command(Rem, Acc);
-parse_command([ ${ | Rem ], Acc) ->
-    {ok, Word, NewRem} = parse_braced(Rem),
-    parse_command(NewRem, [Word|Acc]);
-parse_command([ $" | Rem ], Acc) ->
-    {ok, Word, NewRem} = parse_double_quoted(Rem),
-    parse_command(NewRem, [Word|Acc]);
-parse_command([ $' | Rem ], Acc) ->
-    {ok, Word, NewRem} = parse_single_quoted(Rem),
-    parse_command(NewRem, [Word|Acc]);
 parse_command(Rem, Acc) ->
-    {ok, Word, NewRem} = parse_unquoted(Rem),
+    {ok, Word, NewRem} = parse_word(Rem),
     parse_command(NewRem, [Word|Acc]).
+
+
+
+parse_word(Txt) when is_binary(Txt) ->
+    parse_word(binary_to_list(Txt));
+parse_word(Txt) when is_list(Txt) ->
+    parse_word(Txt, []);
+parse_word(_) -> {error, invalid_input}.
+
+%parse_word([ $< | Rem ], Acc) ->
+%    parse_tuple(Rem, Acc);
+%parse_word([ $( | Rem ], Acc) ->
+%    parse_list(Rem, Acc);
+parse_word([ ${ | Rem ], Acc) ->
+    parse_braced(Rem, Acc);
+parse_word([ $" | Rem ], Acc) ->
+    parse_double_quoted(Rem, Acc);
+parse_word([ $` | Rem ], Acc) ->
+    parse_backquoted(Rem, Acc);
+parse_word([ $' | Rem ], Acc) ->
+    parse_single_quoted(Rem, Acc);
+parse_word(Rem, Acc) ->
+    parse_unquoted(Rem, Acc).
 
 
 
