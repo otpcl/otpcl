@@ -30,21 +30,33 @@ parse_command(Txt) when is_list(Txt) ->
     parse_command(Txt, []);
 parse_command(_) -> {error, invalid_input}.
 
-parse_command([], Acc) ->
-    {ok, {command, lists:reverse(Acc)}, []};
-parse_command([ $\n | Rem ], Acc) ->
-    {ok, {command, lists:reverse(Acc)}, Rem};
-parse_command([ $; | Rem ], Acc) ->
-    {ok, {command, lists:reverse(Acc)}, Rem};
-parse_command([ $\s | Rem ], Acc) ->
-    parse_command(Rem, Acc);
-parse_command([ $\t | Rem ], Acc) ->
-    parse_command(Rem, Acc);
-parse_command([ $\\ | [$\n | Rem] ], Acc) ->
-    parse_command(Rem, Acc);
 parse_command(Rem, Acc) ->
+    {ok, {words, Words}, NewRem} = parse_words(Acc),
+    {ok, {command, Words}, NewRem}.
+
+
+
+parse_words(Txt) when is_binary(Txt) ->
+    parse_words(binary_to_list(Txt));
+parse_words(Txt) when is_list(Txt) ->
+    parse_words(Txt, []);
+parse_words(_) -> {error, invalid_input}.
+
+parse_words([], Acc) ->
+    {ok, {words, lists:reverse(Acc)}, []};
+parse_words([ $\n | Rem ], Acc) ->
+    {ok, {words, lists:reverse(Acc)}, Rem};
+parse_words([ $; | Rem ], Acc) ->
+    {ok, {words, lists:reverse(Acc)}, Rem};
+parse_words([ $\s | Rem ], Acc) ->
+    parse_words(Rem, Acc);
+parse_words([ $\t | Rem ], Acc) ->
+    parse_words(Rem, Acc);
+parse_words([ $\\ | [$\n|Rem] ], Acc) ->
+    parse_words(Rem, Acc);
+parse_words(Rem, Acc) ->
     {ok, Word, NewRem} = parse_word(Rem),
-    parse_command(NewRem, [Word|Acc]).
+    parse_words(NewRem, [Word|Acc]).
 
 
 
