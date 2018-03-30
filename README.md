@@ -1,8 +1,8 @@
-# ecl
+# OTPCL
 
 ## What is it?
 
-Tcl-flavored Erlang.  Or maybe it's Erlang-flavored Tcl?
+Open Telecom Platform Command Language, a.k.a. Tcl-flavored Erlang.  Or maybe it's Erlang-flavored Tcl?
 
 ## What can it do?
 
