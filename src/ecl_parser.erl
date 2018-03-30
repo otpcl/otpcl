@@ -1,4 +1,4 @@
--module(ecl_parser).
+-module(otpcl_parser).
 
 -export([ parse_program/1,
           parse_command/1,
