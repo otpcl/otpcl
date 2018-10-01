@@ -1,4 +1,4 @@
--module(ecl).
+-module(otpcl).
 
 -behaviour(application).
 
