@@ -1,38 +1,26 @@
--module(otpcl_parser_SUITE).
+-module(otpcl_parse_tests).
 -compile(export_all).
 
--include("ct.hrl").
+-include_lib("eunit/include/eunit.hrl").
 
-all() ->
-    [scan_foo,
-     scan_foo_line_bar,
-     parse_foo,
-     parse_atoms,
-     parse_binstrings].
-
-init_per_suite(Config) -> Config.
-end_per_suite(Config) -> Config.
-init_per_testcase(_TestCase, Config) -> Config.
-end_per_testcase(_TestCase, Config) -> Config.
-
-scan_foo(_) ->
+scan_foo_test() ->
     [{$f, {nofile,0,0}},
      {$o, {nofile,0,1}},
-     {$o, {nofile,0,2}}] = otpcl_parser:scan("foo"),
+     {$o, {nofile,0,2}}] = otpcl_parse:scan("foo"),
     ok.
 
-scan_foo_line_bar(_) ->
+scan_foo_line_bar_test() ->
     [{$f, {nofile,0,0}},
      {$o, {nofile,0,1}},
      {$o, {nofile,0,2}},
      {$\n, {nofile,0,3}},
      {$b, {nofile,1,0}},
      {$a, {nofile,1,1}},
-     {$r, {nofile,1,2}}] = otpcl_parser:scan("foo\nbar"),
+     {$r, {nofile,1,2}}] = otpcl_parse:scan("foo\nbar"),
     ok.
 
-parse_foo(_) ->
-    {ok, {parsed, program, Cmds}, []} = otpcl_parser:parse("foo"),
+parse_foo_test() ->
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("foo"),
     [{parsed, command, Words}] = Cmds,
     [{parsed, unquoted, Tokens}] = Words,
     [{$f, {nofile,0,0}},
@@ -40,8 +28,8 @@ parse_foo(_) ->
      {$o, {nofile,0,2}}] = Tokens,
     ok.
 
-parse_atoms(_) ->
-    {ok, {parsed, program, Cmds}, []} = otpcl_parser:parse("foo bar baz"),
+parse_atoms_test() ->
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("foo bar baz"),
     [{parsed, command, Words}] = Cmds,
     [{parsed, unquoted, First},
      {parsed, unquoted, Second},
@@ -51,8 +39,8 @@ parse_atoms(_) ->
     baz = make_atom(Third),
     ok.
 
-parse_binstrings(_) ->
-    {ok, {parsed, program, Cmds}, []} = otpcl_parser:parse("\"foo\" {bar}"),
+parse_binstrings_test() ->
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("\"foo\" {bar}"),
     [{parsed, command, Words}] = Cmds,
     [{parsed, double_quoted, First},
      {parsed, braced, Second}] = Words,

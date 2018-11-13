@@ -1,4 +1,4 @@
--module(otpcl_parser).
+-module(otpcl_parse).
 
 -export([scan/1, parse/1]).
 
