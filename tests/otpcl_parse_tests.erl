@@ -29,10 +29,10 @@ parse_foo_test() ->
     ok.
 
 parse_atoms_test() ->
-    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("foo bar baz"),
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("foo 'bar' baz"),
     [{parsed, command, Words}] = Cmds,
     [{parsed, unquoted, First},
-     {parsed, unquoted, Second},
+     {parsed, single_quoted, Second},
      {parsed, unquoted, Third}] = Words,
     foo = make_atom(First),
     bar = make_atom(Second),
@@ -48,6 +48,28 @@ parse_binstrings_test() ->
     <<"bar">> = make_binstring(Second),
     ok.
 
+parse_charstrings_test() ->
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("`foo` `bar`"),
+    [{parsed, command, Words}] = Cmds,
+    [{parsed, backquoted, First},
+     {parsed, backquoted, Second}] = Words,
+    "foo" = make_charstring(First),
+    "bar" = make_charstring(Second),
+    ok.
+
+parse_lists_test() ->
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("(foo (bar (baz)))"),
+    [{parsed, command, Words}] = Cmds,
+    [{parsed, list, Items}] = Words,
+    [{parsed, unquoted, First}|Rest] = Items,
+    [{parsed, list, RestItems}] = Rest,
+    [{parsed, unquoted, Second}|RestRest] = RestItems,
+    [{parsed, list, RestRestItems}] = RestRest,
+    [{parsed, unquoted, Third}] = RestRestItems,
+    foo = make_atom(First),
+    bar = make_atom(Second),
+    baz = make_atom(Third),
+    ok.
 
 
 %% HELPERS
@@ -57,7 +79,10 @@ parse_binstrings_test() ->
 % actual interpreter).
 
 make_atom(Tokens) ->
-    list_to_atom([C || {C,_} <- Tokens]).
+    list_to_atom(make_charstring(Tokens)).
 
 make_binstring(Tokens) ->
-    list_to_binary([C || {C,_} <- Tokens]).
+    list_to_binary(make_charstring(Tokens)).
+
+make_charstring(Tokens) ->
+    [C || {C,_} <- Tokens].
