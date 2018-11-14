@@ -141,7 +141,7 @@ parse(Lvls, Tokens) ->
                {ok, {parsed, Lvl, lists:reverse(Acc)}, Tokens}).
 
 -define(TPAIR_DROP_SWITCH(Old, First, Second, New),
-        parse([Old|Up], [First|[Second|Rem]], Acc) ->
+        parse([Old|Up], [{First,_}|[{Second,_}|Rem]], Acc) ->
                ?DEBUG_PRINT("~p: dropping token pair ~p/~p and switching to "
                             ++ "~p\n", [Old, First, Second, New]),
                parse([New|Up], Rem, Acc)).
@@ -176,11 +176,24 @@ parse(Lvls, Tokens) ->
 
 
 ?EOF_EXIT_OK(program);
+%% ?TOKEN_TAKE_DESCEND(program, $#, comment); Special-casing this
+% because we're at the top level, which causes issues with the
+% relevant macro.
+parse(Lvls = [program], [{$#,_}|Rem], Acc) ->
+    ?DEBUG_PRINT("~p: taking token ~p and descending to ~p\n",
+                 [program, $#, comment]),
+    {ok, Child, NewRem} = parse([comment|Lvls], Rem),
+    parse(Lvls, NewRem, [Child|Acc]);
+?TOKEN_DROP(program, $\s);
+?TOKEN_DROP(program, $\t);
 ?ANY_KEEP_DESCEND(program, command);
 
 ?EOF_EXIT_OK(command);
 ?TOKEN_EXIT_OK(command, $\n);
+?TOKEN_EXIT_OK(command, $;);
+?TOKEN_KEEP_EXIT_OK(command, $#);
 ?TPAIR_DROP(command, $\\, $\n);
+?TPAIR_DROP(command, $\\, $;);
 ?TOKEN_DROP(command, $\s);
 ?TOKEN_DROP(command, $\t);
 ?ANY_KEEP_DESCEND(command, word);
@@ -188,7 +201,8 @@ parse(Lvls, Tokens) ->
 ?TOKEN_EXIT_OK(word, $\s);
 ?TOKEN_EXIT_OK(word, $\t);
 ?TOKEN_EXIT_OK(word, $\n);
-?TOKEN_DROP_SWITCH(word, $#, comment);
+?TOKEN_EXIT_OK(word, $;);
+?TOKEN_KEEP_EXIT_OK(word, $#);
 ?TOKEN_DROP_SWITCH(word, ${, braced);
 ?TOKEN_EXIT_ERROR(word, $}, unexpected_close_brace);
 ?TOKEN_DROP_SWITCH(word, $", double_quoted);
@@ -239,12 +253,14 @@ parse(Lvls, Tokens) ->
 ?TOKEN_EXIT_OK(unquoted, $\t);
 ?TOKEN_KEEP_EXIT_OK(unquoted, $\n);
 ?TPAIR_KEEP_EXIT_OK(unquoted, $\\, $\n);
+?TOKEN_KEEP_EXIT_OK(unquoted, $;);
 ?TOKEN_KEEP_EXIT_OK(unquoted, $]);
 ?TOKEN_KEEP_EXIT_OK(unquoted, $));
 ?TOKEN_KEEP_EXIT_OK(unquoted, $>);
 ?TOKEN_TAKE_ESCAPED(unquoted, $\s);
 ?TOKEN_TAKE_ESCAPED(unquoted, $\t);
 ?TOKEN_TAKE_ESCAPED(unquoted, $\\);
+?TOKEN_TAKE_ESCAPED(unquoted, $;);
 ?ANY_TAKE(unquoted);
 
 ?EOF_EXIT_OK(var_unquoted);
@@ -252,12 +268,14 @@ parse(Lvls, Tokens) ->
 ?TOKEN_EXIT_OK(var_unquoted, $\t);
 ?TOKEN_KEEP_EXIT_OK(var_unquoted, $\n);
 ?TPAIR_KEEP_EXIT_OK(var_unquoted, $\\, $\n);
+?TOKEN_KEEP_EXIT_OK(var_unquoted, $;);
 ?TOKEN_KEEP_EXIT_OK(var_unquoted, $]);
 ?TOKEN_KEEP_EXIT_OK(var_unquoted, $));
 ?TOKEN_KEEP_EXIT_OK(var_unquoted, $>);
 ?TOKEN_TAKE_ESCAPED(var_unquoted, $\s);
 ?TOKEN_TAKE_ESCAPED(var_unquoted, $\t);
 ?TOKEN_TAKE_ESCAPED(var_unquoted, $\\);
+?TOKEN_TAKE_ESCAPED(var_unquoted, $;);
 ?ANY_TAKE(var_unquoted);
 
 ?EOF_EXIT_ERROR(var_braced, missing_close_brace);
