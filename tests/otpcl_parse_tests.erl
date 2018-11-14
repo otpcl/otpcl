@@ -30,45 +30,82 @@ parse_foo_test() ->
 
 parse_atoms_test() ->
     {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("foo 'bar' baz"),
-    [{parsed, command, Words}] = Cmds,
-    [{parsed, unquoted, First},
-     {parsed, single_quoted, Second},
-     {parsed, unquoted, Third}] = Words,
-    foo = make_atom(First),
-    bar = make_atom(Second),
-    baz = make_atom(Third),
+    [{parsed, command, AtomNodes}] = Cmds,
+    [foo, bar, baz] = [interpret(N) || N <- AtomNodes],
     ok.
 
 parse_binstrings_test() ->
     {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("\"foo\" {bar}"),
-    [{parsed, command, Words}] = Cmds,
-    [{parsed, double_quoted, First},
-     {parsed, braced, Second}] = Words,
-    <<"foo">> = make_binstring(First),
-    <<"bar">> = make_binstring(Second),
+    [{parsed, command, StringNodes}] = Cmds,
+    [<<"foo">>, <<"bar">>] = [interpret(N) || N <- StringNodes],
     ok.
 
 parse_charstrings_test() ->
     {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("`foo` `bar`"),
-    [{parsed, command, Words}] = Cmds,
-    [{parsed, backquoted, First},
-     {parsed, backquoted, Second}] = Words,
-    "foo" = make_charstring(First),
-    "bar" = make_charstring(Second),
+    [{parsed, command, CharstringNodes}] = Cmds,
+    ["foo", "bar"] = [interpret(N) || N <- CharstringNodes],
     ok.
 
 parse_lists_test() ->
     {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("(foo (bar (baz)))"),
-    [{parsed, command, Words}] = Cmds,
-    [{parsed, list, Items}] = Words,
-    [{parsed, unquoted, First}|Rest] = Items,
-    [{parsed, list, RestItems}] = Rest,
-    [{parsed, unquoted, Second}|RestRest] = RestItems,
-    [{parsed, list, RestRestItems}] = RestRest,
-    [{parsed, unquoted, Third}] = RestRestItems,
-    foo = make_atom(First),
-    bar = make_atom(Second),
-    baz = make_atom(Third),
+    [{parsed, command, [ListNode]}] = Cmds,
+    [foo, [bar, [baz]]] = interpret(ListNode),
+    ok.
+
+parse_tuple_test() ->
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("<foo bar baz>"),
+    [{parsed, command, [TupleNode]}] = Cmds,
+    {foo, bar, baz} = interpret(TupleNode),
+    ok.
+
+parse_variables_test() ->
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse("$foo ${bar}"),
+    [{parsed, command, [First, Second]}] = Cmds,
+    "Value of foo" = interpret(First),
+    "Value of bar" = interpret(Second),
+    ok.
+
+example_function(First, Second, Third) ->
+    {First, Second, Third}.
+example_function_2(First, Second, Third) ->
+    [First, Second, Third].
+
+parse_funcall_test() ->
+    SrcCode = "[example_function foo bar baz]",
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse(SrcCode),
+    [{parsed, command, [FuncallNode]}] = Cmds,
+    {foo, bar, baz} = interpret(FuncallNode),
+    ok.
+
+parse_commands_test() ->
+    SrcCode =
+        "example_function foo bar baz\nexample_function_2 baz bar foo",
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse(SrcCode),
+    [First, Second] = [interpret(C) || C <- Cmds],
+    {foo, bar, baz} = First,
+    [baz, bar, foo] = Second,
+    ok.
+
+parse_continued_command_test() ->
+    SrcCode = "example_function foo bar\\\n    baz",
+    {ok, {parsed, program, [Cmd]}, []} = otpcl_parse:parse(SrcCode),
+    {foo, bar, baz} = interpret(Cmd),
+    ok.
+
+parse_semicoloned_commands_test() ->
+    SrcCode =
+        "example_function foo bar baz; example_function_2 baz bar foo",
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse(SrcCode),
+    [First, Second] = [interpret(C) || C <- Cmds],
+    {foo, bar, baz} = First,
+    [baz, bar, foo] = Second,
+    ok.
+
+parse_comments_test() ->
+    SrcCode =
+        "example_function foo bar baz # This is a comment",
+    {ok, {parsed, program, Cmds}, []} = otpcl_parse:parse(SrcCode),
+    [{foo,bar,baz}, " This is a comment"] = [interpret(C) || C <- Cmds],
     ok.
 
 
@@ -86,3 +123,44 @@ make_binstring(Tokens) ->
 
 make_charstring(Tokens) ->
     [C || {C,_} <- Tokens].
+
+%%% TODO: this might actually *be* the interpreter, though vars and
+%%% funcalls will need to be handled within token lists at some point,
+%%% and we'll probably want to track interpretation state, but
+%%% whatever.
+
+interpret({parsed, unquoted, Tokens}) ->
+    make_atom(Tokens);
+interpret({parsed, single_quoted, Tokens}) ->
+    make_atom(Tokens);
+interpret({parsed, double_quoted, Tokens}) ->
+    make_binstring(Tokens);
+interpret({parsed, braced, Tokens}) ->
+    make_binstring(Tokens);
+interpret({parsed, backquoted, Tokens}) ->
+    make_charstring(Tokens);
+interpret({parsed, list, Items}) ->
+    [interpret(I) || I <- Items];
+interpret({parsed, tuple, Items}) ->
+    list_to_tuple([interpret(I) || I <- Items]);
+interpret({parsed, funcall, Words}) ->
+    [Name|Args] = [interpret(I) || I <- Words],
+    apply(?MODULE, Name, Args);
+interpret({parsed, command, Words}) ->
+    [Name|Args] = [interpret(I) || I <- Words],
+    apply(?MODULE, Name, Args);
+interpret({parsed, var_unquoted, Tokens}) ->
+    % Since this is not the real interpreter, we're just going to mock
+    % this.
+    "Value of " ++ make_charstring(Tokens);
+interpret({parsed, var_braced, Tokens}) ->
+    % See above
+    "Value of " ++ make_charstring(Tokens);
+interpret({parsed, comment, Tokens}) ->
+    % This ain't what the interpreter will actually do, but it's good
+    % enough for our tests.
+    make_charstring(Tokens);
+interpret({parsed, Type, Data}) ->
+    {error, unknown_node_type, Type, Data};
+interpret(_) ->
+    {error, not_an_otpcl_parse_node}.
