@@ -176,14 +176,7 @@ parse(Lvls, Tokens) ->
 
 
 ?EOF_EXIT_OK(program);
-%% ?TOKEN_TAKE_DESCEND(program, $#, comment); Special-casing this
-% because we're at the top level, which causes issues with the
-% relevant macro.
-parse(Lvls = [program], [{$#,_}|Rem], Acc) ->
-    ?DEBUG_PRINT("~p: taking token ~p and descending to ~p\n",
-                 [program, $#, comment]),
-    {ok, Child, NewRem} = parse([comment|Lvls], Rem),
-    parse(Lvls, NewRem, [Child|Acc]);
+?TOKEN_TAKE_DESCEND(program, $#, comment);
 ?TOKEN_DROP(program, $\s);
 ?TOKEN_DROP(program, $\t);
 ?ANY_KEEP_DESCEND(program, command);
