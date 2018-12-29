@@ -54,25 +54,52 @@ Well, it can parse a Tcl-like language:
 
 ```
 
-Your eyes are probably melting from trying to make sense of that, but
-it "clearly" shows an AST with a bunch of nodes, each containing one
-or more nodes and/or tokens (character codes + positions in the source
-code).
+And it can interpret that language, too:
 
-Pretty soon it'll (hopefully) be able to actually interpret and run
-OTPCL scripts (some rough sketches of this can be found in
-`tests/otpcl_parser_tests.erl`; see the various `interpret/1` clauses
-(and the testcases themselves) for details).
+```erlang
+
+2> otpcl_eval:eval("set foo puts; $foo {Hello, world!~n}").
+Hello, world!
+{ok,{#{puts => #Fun<otpcl_eval.1.27999811>,
+       set => #Fun<otpcl_eval.0.27999811>},
+     #{foo => puts}}}
+
+```
+
+Right now it's pretty minimal; the current "standard library" only
+consists of `puts` and `set`, and OTPCL does not currently support
+calling Erlang-native functions (though this will hopefully be
+implemented in the near future!).  However, you can certainly define
+your own functions:
+
+```erlang
+
+3> Sum = fun (Nums, State) -> {lists:sum(Nums), State} end.
+#Fun<erl_eval.12.127694169>
+4> {ok, sum, Sum, MyState} = otpcl_eval:set_fun(sum, Sum, otpcl_eval:default_state()).
+{ok,sum,#Fun<erl_eval.12.127694169>,
+    {#{puts => #Fun<otpcl_eval.1.27999811>,
+       set => #Fun<otpcl_eval.0.27999811>,
+       sum => #Fun<erl_eval.12.127694169>},
+     #{}}}
+5> otpcl_eval:eval("set foo [sum 1 2 3 4 5]", MyState).
+{ok,{#{puts => #Fun<otpcl_eval.1.27999811>,
+       set => #Fun<otpcl_eval.0.27999811>,
+       sum => #Fun<erl_eval.12.127694169>},
+     #{foo => 15}}}
+
+```
+
 
 ## What *should* it do?
 
 * Tokenizer (100%)
 
-* Parser (75%)
+* Parser (80%)
 
-* Interpreter (25%)
+* Interpreter (90%)
 
-* Standard library / built-in functions (0%)
+* Standard library / built-in functions (1%)
 
 * Compiler (0%)
 
@@ -80,6 +107,8 @@ OTPCL scripts (some rough sketches of this can be found in
 
 * Tests (no idea what the test coverage is right now, but hey, at
   least I wrote tests this time!)
+
+* Docs (0%)
 
 ## What's the license?
 
