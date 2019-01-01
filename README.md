@@ -134,6 +134,43 @@ However, you can certainly define your own functions:
 
 * Docs (0%)
 
+## What's the actual syntax?
+
+Like with Tcl, an OTPCL program is a sequence of
+vertical-whitespace-delimited commands (semicolons counting as
+"vertical whitespace" in this context), each of which is a sequence of
+horizontal-whitespace-delimited words (note: not all forms of
+horizontal/vertical whitespace are currently recognized as such by the
+parser).
+
+A word may be any of the following:
+
+* An atom (either `unquoted` or `'Single Quoted'`)
+* An integer (`123` or `-123`)
+* A float (`123.456` or `-123.456`)
+* A binary string (either `"double quoted"` or `{curly braced}`)
+* A charlist string (backquoted)
+* A list (`(word-elements surrounded by parentheses)`)
+* A tuple (`<word-elements surrounded by angle brackets>`)
+* A variable substitution (either `$unquoted` or `${braced}`)
+* A function call substitution (`[command inside square brackets]`)
+
+### Crash Course
+
+```tcl
+
+this is a command  # this is a comment
+this is one command; this is another command
+this command (accepts a list)
+this command <accepts a tuple>
+this command "accepts a binary string"
+this command {also accepts a binary string}
+this command `accepts an Erlang-style charlist string`
+this command 'Accepts an atom that has spaces in it'
+this command will use a $variable ${another variable} and a [function call]
+
+```
+
 ## What's the license?
 
 OpenBSD-style ISC License:
