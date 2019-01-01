@@ -1,0 +1,10 @@
+{application, otpcl,
+ [{description, "Open Telecom Platform Command Language"},
+  {vsn, "0.1.0"},
+  {modules, [otpcl_parse, otpcl_eval, otpcl_env, otpcl_stdlib]},
+  {registered, []},
+  {applications, [kernel,
+                 stdlib]},
+  {maintainers, ["Ryan S. Northrup"]},
+  {licenses, ["ISC"]},
+  {links, [{"Bitbucket", "https://bitbucket.org/YellowApple/otpcl"}]}]}.

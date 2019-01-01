@@ -10,7 +10,7 @@ Well, it can parse a Tcl-like language:
 
 ```erlang
 
-1> otpcl_parse:parse("foo {bar $baz {bam [bat $baf]} bal} $bad $bak$bae [bah $bay]").
+1> otpcl:parse("foo {bar $baz {bam [bat $baf]} bal} $bad $bak$bae [bah $bay]").
 {ok,{parsed,program,
         [{parsed,command,
              [{parsed,unquoted,
@@ -58,35 +58,58 @@ And it can interpret that language, too:
 
 ```erlang
 
-2> otpcl_eval:eval("set foo puts; $foo {Hello, world!~n}").
+2> otpcl:eval("print {Hello, world!~n}").
 Hello, world!
-{ok,{#{puts => #Fun<otpcl_eval.1.27999811>,
-       set => #Fun<otpcl_eval.0.27999811>},
-     #{foo => puts}}}
+{ok,{#{decr => fun otpcl_stdlib:decr/2,
+       'if' => fun otpcl_stdlib:if/2,
+       incr => fun otpcl_stdlib:incr/2,
+       print => fun otpcl_stdlib:print/2,
+       set => fun otpcl_stdlib:set/2,
+       unless => fun otpcl_stdlib:unless/2},
+     #{'RETVAL' => ok}}}
+     
+3> otpcl:eval("set foo 1; set bar 2; set baz 3; incr foo").
+{2,
+ {#{decr => fun otpcl_stdlib:decr/2,
+    'if' => fun otpcl_stdlib:if/2,
+    incr => fun otpcl_stdlib:incr/2,
+    print => fun otpcl_stdlib:print/2,
+    set => fun otpcl_stdlib:set/2,
+    unless => fun otpcl_stdlib:unless/2},
+  #{'RETVAL' => 2,bar => 2,baz => 3,foo => 2}}}
 
 ```
 
 Right now it's pretty minimal; the current "standard library" only
-consists of `puts` and `set`, and OTPCL does not currently support
-calling Erlang-native functions (though this will hopefully be
-implemented in the near future!).  However, you can certainly define
-your own functions:
+consists of a handful of demo functions (you can see them in the
+returned final state of both those `otpcl:eval/1` examples above), and
+OTPCL does not currently support calling Erlang-native functions
+(though this will hopefully be implemented in the near future!).
+However, you can certainly define your own functions:
 
 ```erlang
 
-3> Sum = fun (Nums, State) -> {lists:sum(Nums), State} end.
+4> Sum = fun (Nums, State) -> {lists:sum(Nums), State} end.
 #Fun<erl_eval.12.127694169>
-4> {ok, sum, Sum, MyState} = otpcl_eval:set_fun(sum, Sum, otpcl_eval:default_state()).
+5> {ok, sum, Sum, MyState} = otpcl_env:set_fun(sum, Sum, otpcl_env:default_state()).
 {ok,sum,#Fun<erl_eval.12.127694169>,
-    {#{puts => #Fun<otpcl_eval.1.27999811>,
-       set => #Fun<otpcl_eval.0.27999811>,
-       sum => #Fun<erl_eval.12.127694169>},
-     #{}}}
-5> otpcl_eval:eval("set foo [sum 1 2 3 4 5]", MyState).
-{ok,{#{puts => #Fun<otpcl_eval.1.27999811>,
-       set => #Fun<otpcl_eval.0.27999811>,
-       sum => #Fun<erl_eval.12.127694169>},
-     #{foo => 15}}}
+    {#{decr => fun otpcl_stdlib:decr/2,
+       'if' => fun otpcl_stdlib:if/2,
+       incr => fun otpcl_stdlib:incr/2,
+       print => fun otpcl_stdlib:print/2,
+       set => fun otpcl_stdlib:set/2,
+       sum => #Fun<erl_eval.12.127694169>,
+       unless => fun otpcl_stdlib:unless/2},
+     #{'RETVAL' => ok}}}
+6> otpcl_eval:eval("set foo [sum 1 2 3 4 5]", MyState).
+{ok,{#{decr => fun otpcl_stdlib:decr/2,
+       'if' => fun otpcl_stdlib:if/2,
+       incr => fun otpcl_stdlib:incr/2,
+       print => fun otpcl_stdlib:print/2,
+       set => fun otpcl_stdlib:set/2,
+       sum => #Fun<erl_eval.12.127694169>,
+       unless => fun otpcl_stdlib:unless/2},
+     #{'RETVAL' => ok,foo => 15}}}
 
 ```
 
@@ -95,11 +118,12 @@ your own functions:
 
 * Tokenizer (100%)
 
-* Parser (80%)
+* Parser (90%) (probably more stuff that can be added, like pipes; I
+  like pipes, and therefore want to add them)
 
 * Interpreter (90%)
 
-* Standard library / built-in functions (1%)
+* Standard library / built-in functions (5%)
 
 * Compiler (0%)
 
@@ -111,6 +135,8 @@ your own functions:
 * Docs (0%)
 
 ## What's the license?
+
+OpenBSD-style ISC License:
 
 > Copyright (c) 2018 Ryan S. Northrup <northrup@yellowapple.us>
 
