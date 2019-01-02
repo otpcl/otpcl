@@ -3,7 +3,7 @@
 -behaviour(application).
 
 -export([start/2, stop/1, parse/1, interpret/1, interpret/2, eval/1,
-         eval/2]).
+         eval/2, eval_file/1, eval_file/2]).
 
 start(_Type, _Args) ->
     {error, not_implemented}.
@@ -26,3 +26,8 @@ eval(Src) ->
     otpcl_eval:eval(Src).
 eval(Src, State) ->
     otpcl_eval:eval(Src, State).
+
+eval_file(Filename) ->
+    otpcl_eval:eval_file(Filename).
+eval_file(Filename, State) ->
+    otpcl_eval:eval_file(Filename, State).
