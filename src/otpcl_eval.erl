@@ -1,6 +1,6 @@
 -module(otpcl_eval).
 
--export([interpret/1, interpret/2, eval/1, eval/2]).
+-export([interpret/1, interpret/2, eval/1, eval/2, eval_file/1, eval_file/2]).
 
 -ifdef(DEBUG).
 -define(DEBUG_PRINT(Msg, Args), io:format(Msg, Args)).
@@ -96,11 +96,20 @@ interpret(InvalidNode, State) ->
     {error, not_an_otpcl_parse_node, InvalidNode, State}.
 
 
-% And a nice friendly wrapper around that interpreter
+% And some nice friendly wrappers around that interpreter
 
 eval(Src) ->
     eval(Src, otpcl_env:default_state()).
 
 eval(Src, State) ->
-    {ok, Nodes, []} = otpcl_parse:parse(Src),
-    interpret(Nodes, State).
+    {ok, Tree, []} = otpcl_parse:parse(Src),
+    interpret(Tree, State).
+
+eval_file(Filename) ->
+    eval_file(Filename, otpcl_env:default_state()).
+
+eval_file(Filename, State) ->
+    {ok, Src} = file:read_file(Filename),
+    Tokens = otpcl_parse:scan(Src, otpcl_parse:initpos(Filename)),
+    {ok, Tree, []} = otpcl_parse:parse(Tokens),
+    interpret(Tree, State).
