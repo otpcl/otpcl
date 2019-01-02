@@ -1,6 +1,6 @@
 -module(otpcl_parse).
 
--export([scan/1, parse/1]).
+-export([scan/1, scan/2, parse/1, initpos/0, initpos/1]).
 
 -ifdef(DEBUG).
 -define(DEBUG_PRINT(Msg, Args), io:format(Msg, Args)).
@@ -15,7 +15,7 @@
 %% though.
 
 scan(Txt) ->
-    scan(Txt, initpos()).
+    scan(Txt, [], initpos()).
 scan(Txt, Pos) ->
     scan(Txt, [], Pos).
 
@@ -306,6 +306,8 @@ parse(Lvls, Rem, Acc) ->
 
 initpos() ->
     {nofile,0,0}.
+initpos(Filename) ->
+    {Filename,0,0}.
 
 nextpos($\n, {F,L,_}) ->
     {F,L+1,0};
