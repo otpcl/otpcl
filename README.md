@@ -175,7 +175,7 @@ this command will use a $variable ${another variable} and a [function call]
 
 OpenBSD-style ISC License:
 
-> Copyright (c) 2018 Ryan S. Northrup <northrup@yellowapple.us>
+> Copyright (c) 2018, 2019 Ryan S. Northrup <northrup@yellowapple.us>
 
 > Permission to use, copy, modify, and distribute this software for
 > any purpose with or without fee is hereby granted, provided that the
