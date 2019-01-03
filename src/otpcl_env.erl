@@ -1,6 +1,6 @@
 -module(otpcl_env).
 
--export([get_var/2, set_var/3, get_fun/2, set_fun/3, call_fun/3,
+-export([get_var/2, set_var/3, get_fun/2, set_fun/3, call_fun/3, import_fun/3,
          default_state/0, default_funs/0, default_vars/0]).
 
 get_var(Name, {Funs, Vars}) ->
@@ -27,21 +27,21 @@ set_fun(Name, Fun, {Funs, Vars}) ->
 call_fun(Name, Args, State) ->
     {ok, Name, Fun, State} = get_fun(Name, State),
     apply(Fun, [Args, State]).
+import_fun(Module, Name, State) ->
+    WrappedFun = fun (Args, S) -> {apply(Module, Name, Args), S} end,
+    set_fun(Name, WrappedFun, State).
 
 default_state() ->
     {default_funs(), default_vars()}.
 default_funs() ->
     %% Every OTPCL fun must accept a list of arguments and an input
     %% state, and must return a return value and an output state.
-    %% Should I or someone else ever get around to allowing direct
-    %% Erlang-native function calls, said calls will need to include
-    %% the necessary wrapping logic to deal with the OTPCL interpreter
-    %% state.
     #{ set    => fun otpcl_stdlib:set/2,
        print  => fun otpcl_stdlib:print/2,
        'if'   => fun otpcl_stdlib:'if'/2,
        unless => fun otpcl_stdlib:unless/2,
        incr   => fun otpcl_stdlib:incr/2,
-       decr   => fun otpcl_stdlib:decr/2 }.
+       decr   => fun otpcl_stdlib:decr/2,
+       import => fun otpcl_stdlib:import/2 }.
 default_vars() ->
     #{'RETVAL' => ok}.
