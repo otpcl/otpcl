@@ -1,6 +1,7 @@
 -module(otpcl_stdlib).
 
--export([set/2, print/2, 'if'/2, truthy/1, unless/2, incr/2, decr/2, import/2]).
+-export([set/2, print/2, 'if'/2, truthy/1, unless/2, incr/2, decr/2, import/2,
+         eval/2]).
 
 % All OTPCL functions are represented behind-the-scenes as 2-arity
 % Erlang functions; the first argument is a list of the actual
@@ -79,3 +80,6 @@ decr([VarName, By], State) ->
 import([Module, Name], State) ->
     {ok, Name, Fun, NewState} = otpcl_env:import_fun(Module, Name, State),
     {Fun, NewState}.
+
+eval([Txt], State) ->
+    otpcl_eval:eval(Txt, State).

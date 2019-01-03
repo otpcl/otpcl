@@ -42,6 +42,7 @@ default_funs() ->
        unless => fun otpcl_stdlib:unless/2,
        incr   => fun otpcl_stdlib:incr/2,
        decr   => fun otpcl_stdlib:decr/2,
-       import => fun otpcl_stdlib:import/2 }.
+       import => fun otpcl_stdlib:import/2,
+       eval   => fun otpcl_stdlib:eval/2 }.
 default_vars() ->
     #{'RETVAL' => ok}.
