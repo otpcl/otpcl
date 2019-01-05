@@ -1,7 +1,15 @@
 -module(otpcl_stdlib).
 
--export([set/2, print/2, 'if'/2, truthy/1, unless/2, incr/2, decr/2, import/2,
-         eval/2]).
+-export([get/2, set/2, print/2, 'if'/2, truthy/1, unless/2, incr/2, decr/2,
+         import/2, eval/2, funget/2, funset/2, funcall/2]).
+
+% Modules which provide Made For OTPCL™ functions can specify them
+% with the -otpcl_funs/1 module attribute, which will tell OTPCL's
+% import function(s) to import these as state-changing functions
+% (otherwise, it'll import them as if they're ordinary Erlang
+% functions, which might not be what you want if you actually do care
+% about the interpreter state).
+-otpcl_funs([set, print, 'if', unless, incr, decr, import, eval]).
 
 % All OTPCL functions are represented behind-the-scenes as 2-arity
 % Erlang functions; the first argument is a list of the actual
@@ -12,9 +20,16 @@
 % This standard library is pretty bare-bones, but should provide an
 % adequate demonstration of how to define further functions.
 
-set([Name, Val], State) ->
-    {ok, Name, Val, NewState} = otpcl_env:set_var(Name, Val, State),
-    {ok, NewState}.
+get([Name], {Funs, Vars}) ->
+    case maps:find(Name, Vars) of
+        {ok, Val} ->
+            {Val, {Funs, Vars}};
+        _ ->
+            {{error, no_such_var}, {Funs, Vars}}
+    end.
+
+set([Name, Val], {Funs, Vars}) ->
+    {ok, {Funs, maps:put(Name, Val, Vars)}}.
 
 print([], State) ->
     {ok, 'RETVAL', RetVal, State} = otpcl_env:get_var('RETVAL', State),
@@ -62,10 +77,9 @@ incr([VarName], State) when is_atom(VarName) ->
 incr([By], State) ->
     incr(['RETVAL', By], State);
 incr([VarName, By], State) ->
-    {ok, VarName, OldVal, State} = otpcl_env:get_var(VarName, State),
+    {OldVal, State} = get([VarName], State),
     NewVal = OldVal + By,
-    {ok, VarName, NewVal, NewState} = otpcl_env:set_var(VarName, NewVal,
-                                                        State),
+    {ok, NewState} = set([VarName, NewVal], State),
     {NewVal, NewState}.
 
 decr([], State) ->
@@ -78,8 +92,26 @@ decr([VarName, By], State) ->
     incr([VarName, By * -1], State).
 
 import([Module, Name], State) ->
-    {ok, Name, Fun, NewState} = otpcl_env:import_fun(Module, Name, State),
-    {Fun, NewState}.
+    WrappedFun = fun (Args, S) -> {apply(Module, Name, Args), S} end,
+    funset([Name, WrappedFun], State).
 
+eval([Name, Args], State) ->
+    {Fun, State} = funget([Name], State),
+    apply(Fun, [Args, State]);
 eval([Txt], State) ->
     otpcl_eval:eval(Txt, State).
+
+funget([Name], {Funs, Vars}) ->
+    case maps:find(Name, Funs) of
+        {ok, Fun} ->
+            {Fun, {Funs, Vars}};
+        _ ->
+            {error, no_such_fun, {Funs, Vars}}
+    end.
+
+funset([Name, Fun], {Funs, Vars}) when is_function(Fun) ->
+    {ok, {maps:put(Name, Fun, Funs), Vars}}.
+
+funcall([Name, Args], State) ->
+    {Fun, State} = funget([Name], State),
+    apply(Fun, [Args, State]).

@@ -60,10 +60,10 @@ interpret({parsed, braced, Tokens}, _State) ->
 interpret({parsed, backquoted, Tokens}, _State) ->
     make_charstring(Tokens);
 interpret({parsed, var_unquoted, Tokens}, State) ->
-    {ok, _, Val, _} = otpcl_env:get_var(make_atom(Tokens), State),
+    {Val, State} = otpcl_stdlib:get([make_atom(Tokens)], State),
     Val;
 interpret({parsed, var_braced, Tokens}, State) ->
-    {ok, _, Val, _} = otpcl_env:get_var(make_atom(Tokens), State),
+    {Val, State} = otpcl_stdlib:get([make_atom(Tokens)], State),
     Val;
 % FIXME: any state changes here (new/modified functions and variables,
 % for example) won't actually persist beyond a list/tuple/funcall
@@ -75,21 +75,19 @@ interpret({parsed, tuple, Items}, State) ->
     list_to_tuple([interpret(I, State) || I <- Items]);
 interpret({parsed, funcall, Words}, State) ->
     [Name|Args] = [interpret(I, State) || I <- Words],
-    {Res, _} = otpcl_env:call_fun(Name, Args, State),
+    {Res, _} = otpcl_stdlib:funcall([Name, Args], State),
     Res;
 interpret({parsed, command, Words}, State) ->
     [Name|Args] = [interpret(I, State) || I <- Words],
-    otpcl_env:call_fun(Name, Args, State);
+    otpcl_stdlib:funcall([Name, Args], State);
 interpret({parsed, comment, _}, State) ->
     {ok, State};
 interpret({parsed, program, [Cmd|Rest]}, State) ->
     {RetVal, NewState} = interpret(Cmd, State),
-    {ok, 'RETVAL', RetVal, RetState} = otpcl_env:set_var('RETVAL', RetVal,
-                                                         NewState),
+    {ok, RetState} = otpcl_stdlib:set(['RETVAL', RetVal], NewState),
     interpret({parsed, program, Rest}, RetState);
 interpret({parsed, program, []}, State) ->
-    {ok, 'RETVAL', RetVal, State} = otpcl_env:get_var('RETVAL', State),
-    {RetVal, State};
+    otpcl_stdlib:get(['RETVAL'], State);
 interpret({parsed, Type, Data}, State) ->
     {error, unknown_node_type, Type, Data, State};
 interpret(InvalidNode, State) ->

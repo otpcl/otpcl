@@ -36,7 +36,8 @@ default_state() ->
 default_funs() ->
     %% Every OTPCL fun must accept a list of arguments and an input
     %% state, and must return a return value and an output state.
-    #{ set    => fun otpcl_stdlib:set/2,
+    #{ get    => fun otpcl_stdlib:get/2,
+       set    => fun otpcl_stdlib:set/2,
        print  => fun otpcl_stdlib:print/2,
        'if'   => fun otpcl_stdlib:'if'/2,
        unless => fun otpcl_stdlib:unless/2,
