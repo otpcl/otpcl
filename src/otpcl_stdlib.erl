@@ -1,7 +1,7 @@
 -module(otpcl_stdlib).
 
 -export([get/2, set/2, print/2, 'if'/2, truthy/1, unless/2, incr/2, decr/2,
-         import/2, eval/2, funget/2, funset/2, funcall/2]).
+         import/2, eval/2, funget/2, funset/2, funcall/2, send/2]).
 
 % Modules which provide Made For OTPCL™ functions can specify them
 % with the -otpcl_funs/1 module attribute, which will tell OTPCL's
@@ -145,3 +145,7 @@ funset([Name, Fun], {Funs, Vars}) when is_function(Fun) ->
 funcall([Name, Args], State) ->
     {Fun, State} = funget([Name], State),
     apply(Fun, [Args, State]).
+
+send([Pid, Msg], State) ->
+    Pid ! Msg,
+    {ok, State}.
