@@ -1,6 +1,6 @@
 -module(otpcl_parse).
 
--export([scan/1, scan/2, parse/1, initpos/0, initpos/1]).
+-export([scan/1, scan/2, parse/1, parse/2, initpos/0, initpos/1]).
 
 -ifdef(DEBUG).
 -define(DEBUG_PRINT(Msg, Args), io:format(Msg, Args)).
@@ -29,14 +29,14 @@ scan([Char|Rem], Acc, Pos) ->
 
 %% This is where the fun begins
 
-parse(Txt) ->
-    case is_text(Txt) of
-        true -> parse(scan(Txt));
-        _    -> parse([program], Txt)
-    end.
+parse(Input) ->
+    parse([program], Input).
 
-parse(Lvls, Tokens) ->
-    parse(Lvls, Tokens, []).
+parse(Lvls, Input) ->
+    case is_text(Input) of
+        true -> parse(Lvls, scan(Input), []);
+        _    -> parse(Lvls, Input, [])
+    end.
 
 
 %% I ain't got the fancy schmancy college edumacation to know the
