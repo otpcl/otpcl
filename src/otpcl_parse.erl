@@ -106,7 +106,7 @@ parse(Lvls, Tokens) ->
                        NewAcc = [EChar] ++ lists:reverse(Inner) ++ [SChar]
                            ++ Acc,
                        parse(Lvls, NewRem, NewAcc);
-                   [] -> {error, missing_close_brace, lists:reverse(Inner)
+                   [] -> {error, {expected, End}, lists:reverse(Inner)
                           ++ [SChar] ++ Acc}
                end).
 
@@ -215,7 +215,7 @@ parse(Lvls, Tokens) ->
 ?TOKEN_EXIT_OK(comment, $\n);
 ?ANY_TAKE(comment);
 
-?EOF_EXIT_ERROR(braced, missing_close_brace);
+?EOF_EXIT_ERROR(braced, {expected, $}});
 ?TOKEN_EXIT_OK(braced, $});
 ?TOKEN_TAKE_DESCEND_FLATTEN(braced, ${, braced, $});
 ?TOKEN_TAKE_ESCAPED(braced, ${);
@@ -223,19 +223,19 @@ parse(Lvls, Tokens) ->
 ?TOKEN_TAKE_ESCAPED(braced, $\\);
 ?ANY_TAKE(braced);
 
-?EOF_EXIT_ERROR(double_quoted, missing_double_quote);
+?EOF_EXIT_ERROR(double_quoted, {expected, $"});
 ?TOKEN_EXIT_OK(double_quoted, $");
 ?TOKEN_TAKE_ESCAPED(double_quoted, $");
 ?TOKEN_TAKE_ESCAPED(double_quoted, $\\);
 ?ANY_TAKE(double_quoted);
 
-?EOF_EXIT_ERROR(backquoted, missing_backquote);
+?EOF_EXIT_ERROR(backquoted, {expected, $`});
 ?TOKEN_EXIT_OK(backquoted, $`);
 ?TOKEN_TAKE_ESCAPED(backquoted, $`);
 ?TOKEN_TAKE_ESCAPED(backquoted, $\\);
 ?ANY_TAKE(backquoted);
 
-?EOF_EXIT_ERROR(single_quoted, missing_single_quote);
+?EOF_EXIT_ERROR(single_quoted, {expected, $'});
 ?TOKEN_EXIT_OK(single_quoted, $');
 ?TOKEN_TAKE_ESCAPED(single_quoted, $');
 ?TOKEN_TAKE_ESCAPED(single_quoted, $\\);
@@ -271,7 +271,7 @@ parse(Lvls, Tokens) ->
 ?TOKEN_TAKE_ESCAPED(var_unquoted, $;);
 ?ANY_TAKE(var_unquoted);
 
-?EOF_EXIT_ERROR(var_braced, missing_close_brace);
+?EOF_EXIT_ERROR(var_braced, {expected, $'});
 ?TOKEN_EXIT_OK(var_braced, $});
 ?TOKEN_TAKE_DESCEND_FLATTEN(var_braced, ${, braced, $});
 ?TOKEN_TAKE_ESCAPED(var_braced, ${);
@@ -279,21 +279,21 @@ parse(Lvls, Tokens) ->
 ?TOKEN_TAKE_ESCAPED(var_braced, $\\);
 ?ANY_TAKE(var_braced);
 
-?EOF_EXIT_ERROR(funcall, missing_close_bracket);
+?EOF_EXIT_ERROR(funcall, {expected, $]});
 ?TOKEN_EXIT_OK(funcall, $]);
 ?TPAIR_DROP(funcall, $\\, $\n);
 ?TOKEN_DROP(funcall, $\s);
 ?TOKEN_DROP(funcall, $\t);
 ?ANY_KEEP_DESCEND(funcall, word);
 
-?EOF_EXIT_ERROR(list, missing_close_paren);
+?EOF_EXIT_ERROR(list, {expected, $)});
 ?TOKEN_EXIT_OK(list, $));
 ?TPAIR_DROP(list, $\\, $\n);
 ?TOKEN_DROP(list, $\s);
 ?TOKEN_DROP(list, $\t);
 ?ANY_KEEP_DESCEND(list, word);
 
-?EOF_EXIT_ERROR(tuple, missing_close_angle_bracket);
+?EOF_EXIT_ERROR(tuple, {expected, $>});
 ?TOKEN_EXIT_OK(tuple, $>);
 ?TPAIR_DROP(tuple, $\\, $\n);
 ?TOKEN_DROP(tuple, $\s);
