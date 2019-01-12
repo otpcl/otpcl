@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# TODO: this probably needs significant refinement re: flexibility,
+# since it assumes that we're calling this script as bin/otpcl from
+# within the otpcl source tree.  It's good enough for now, though.
+
+ERL_LIBS='./_build/default/lib/otpcl' exec erl -noshell -noinput \
+        -s otpcl_init start
