@@ -2,15 +2,51 @@
 
 ## What is it?
 
-Open Telecom Platform Command Language, a.k.a. Tcl-flavored Erlang.  Or maybe it's Erlang-flavored Tcl?
+Open Telecom Platform Command Language, a.k.a. Tcl-flavored Erlang.
+Or maybe it's Erlang-flavored Tcl?
 
-## What can it do?
+## How do I use it?
 
-Well, it can parse a Tcl-like language:
+For now, clone this repo, and make sure you have rebar3 installed.
+Then, from the repo's root:
+
+```
+$ rebar3 compile
+[ ... bunch of rebar3 output that hopefully looks successful ... ]
+
+$ bin/otpcl
+OTPCL Shell (WIP!)
+
+otpcl> import lists; sum (1 2 3 4 5)
+15
+otpcl>
+```
+
+You can also use it from an existing project by installing the library
+per your BEAM-based-language's standard mechanism (TODO: upload to
+Hex) and calling the relevant modules/functions directly:
+
+```
+$ rebar3 shell
+===> Verifying dependencies...
+===> Compiling otpcl
+Eshell V10.0  (abort with ^G)
+1> {RetVal, State} = otpcl:eval("import lists; sum (1 2 3 4 5)").
+[ ... bunch of output because we just imported everything from
+      Erlang's lists module and otpcl:eval returns the full
+      interpreter state when it's done executing stuff ... ]
+2> RetVal.
+15
+```
+
+## What (else) can it do?
+
+Well, as you might've guessed from above, it can parse a Tcl-like
+language:
 
 ```erlang
 
-1> otpcl:parse("foo {bar $baz {bam [bat $baf]} bal} $bad $bak$bae [bah $bay]").
+3> otpcl:parse("foo {bar $baz {bam [bat $baf]} bal} $bad $bak$bae [bah $bay]").
 {ok,{parsed,program,
         [{parsed,command,
              [{parsed,unquoted,
@@ -58,7 +94,7 @@ And it can interpret that language, too:
 
 ```erlang
 
-2> otpcl:eval("print {Hello, world!~n}").
+4> otpcl:eval("print {Hello, world!~n}").
 Hello, world!
 {ok,{#{decr => fun otpcl_stdlib:decr/2,
        'if' => fun otpcl_stdlib:if/2,
@@ -68,7 +104,7 @@ Hello, world!
        unless => fun otpcl_stdlib:unless/2},
      #{'RETVAL' => ok}}}
      
-3> otpcl:eval("set foo 1; set bar 2; set baz 3; incr foo").
+5> otpcl:eval("set foo 1; set bar 2; set baz 3; incr foo").
 {2,
  {#{decr => fun otpcl_stdlib:decr/2,
     'if' => fun otpcl_stdlib:if/2,
@@ -80,39 +116,75 @@ Hello, world!
 
 ```
 
-Right now it's pretty minimal; the current "standard library" only
-consists of a handful of demo functions (you can see them in the
-returned final state of both those `otpcl:eval/1` examples above), and
-OTPCL does not currently support calling Erlang-native functions
-(though this will hopefully be implemented in the near future!).
-However, you can certainly define your own functions:
+And as demonstrated above, you can do things from the OTPCL shell/REPL:
+
+```
+otpcl> print "Hello, world!~n"
+Hello, world!
+ok
+otpcl> import math
+ok
+otpcl> exp 4
+54.598150033144236
+otpcl> exp foo
+error error: badarg
+```
+
+You can't define your own functions from within OTPCL yet (there's no
+`def` or `fun` or `proc` or anything like that), but you can certainly
+define some by tweaking the interpreter state directly:
 
 ```erlang
 
 4> Sum = fun (Nums, State) -> {lists:sum(Nums), State} end.
 #Fun<erl_eval.12.127694169>
-5> {ok, sum, Sum, MyState} = otpcl_env:set_fun(sum, Sum, otpcl_env:default_state()).
-{ok,sum,#Fun<erl_eval.12.127694169>,
-    {#{decr => fun otpcl_stdlib:decr/2,
+5> {ok, State} = otpcl_stdlib:funset([sum, Sum], otpcl_env:default_state()).
+{ok,{#{decr => fun otpcl_stdlib:decr/2,
+       eval => fun otpcl_stdlib:eval/2,
        'if' => fun otpcl_stdlib:if/2,
+       import => fun otpcl_stdlib:import/2,
        incr => fun otpcl_stdlib:incr/2,
        print => fun otpcl_stdlib:print/2,
        set => fun otpcl_stdlib:set/2,
        sum => #Fun<erl_eval.12.127694169>,
        unless => fun otpcl_stdlib:unless/2},
      #{'RETVAL' => ok}}}
-6> otpcl_eval:eval("set foo [sum 1 2 3 4 5]", MyState).
-{ok,{#{decr => fun otpcl_stdlib:decr/2,
-       'if' => fun otpcl_stdlib:if/2,
-       incr => fun otpcl_stdlib:incr/2,
-       print => fun otpcl_stdlib:print/2,
-       set => fun otpcl_stdlib:set/2,
-       sum => #Fun<erl_eval.12.127694169>,
-       unless => fun otpcl_stdlib:unless/2},
-     #{'RETVAL' => ok,foo => 15}}}
+6> {RetVal, NewState} = otpcl:eval("sum 1 2 3 4 5", State).
+{15,
+ {#{decr => fun otpcl_stdlib:decr/2,
+    eval => fun otpcl_stdlib:eval/2,
+    'if' => fun otpcl_stdlib:if/2,
+    import => fun otpcl_stdlib:import/2,
+    incr => fun otpcl_stdlib:incr/2,
+    print => fun otpcl_stdlib:print/2,
+    set => fun otpcl_stdlib:set/2,
+    sum => #Fun<erl_eval.12.127694169>,
+    unless => fun otpcl_stdlib:unless/2},
+  #{'RETVAL' => 15}}}
+7> RetVal.
+15
 
 ```
 
+Or, as demonstrated above, you can even import them, whether as whole
+modules:
+
+```
+otpcl> import random; uniform 8675309
+3848234
+```
+
+Or as individual functions:
+
+```
+otpcl> import string (split uppercase)
+ok
+otpcl> split [uppercase "foo,bar,baz"], ","
+[<<"FOO">>,<<"BAR,BAZ">>]
+```
+
+As you can tell, it's all pretty spartan, but it's a decent-enough
+starting point, I'd say.
 
 ## What *should* it do?
 
@@ -121,18 +193,23 @@ However, you can certainly define your own functions:
 * Parser (90%) (probably more stuff that can be added, like pipes; I
   like pipes, and therefore want to add them)
 
-* Interpreter (90%)
+* Interpreter (90%) (pretty sure it's fully functional; just needs
+  better error handling)
 
-* Standard library / built-in functions (5%)
+* Standard library / built-in functions (10%)
 
 * Compiler (0%)
 
-* REPL/shell (0%)
+* REPL/shell (50%) (it "works", but needs proper error handling)
 
 * Tests (no idea what the test coverage is right now, but hey, at
   least I wrote tests this time!)
 
-* Docs (0%)
+* Docs (0%; something something self-documenting code something
+  something)
+
+* Install procedure that's actually sane (or for that matter exists at
+  all)
 
 ## What's the actual syntax?
 
