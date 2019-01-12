@@ -86,8 +86,12 @@ parse(Lvls, Input) ->
         parse(Lvls = [Lvl|_], [{Char,_}|Rem], Acc) ->
                ?DEBUG_PRINT("~p: taking token ~p and descending to ~p\n",
                             [Lvl, Char, SubLvl]),
-               {ok, Child, NewRem} = parse([SubLvl|Lvls], Rem),
-               parse(Lvls, NewRem, [Child|Acc])).
+               case parse([SubLvl|Lvls], Rem) of
+                   {ok, Child, NewRem} ->
+                       parse(Lvls, NewRem, [Child|Acc]);
+                   Error ->
+                       Error
+               end).
 
 -define(TOKEN_TAKE_ESCAPED(Lvl, Char),
         parse(Lvls = [Lvl|_], [$\\|[T={Char,_}|Rem]], Acc) ->
@@ -99,15 +103,20 @@ parse(Lvls, Input) ->
                ?DEBUG_PRINT("~p: taking token ~p for flat descent into ~p "
                             ++ "with ending token ~p\n",
                             [Lvl, Start, SubLvl, End]),
-               {ok, {parsed, _, Inner}, NewRem} = parse([SubLvl|Lvls], Rem),
-               case NewRem of
-                   [{_,RemPos}|_] ->
-                       EChar = {End,nextpos(End,RemPos)},
-                       NewAcc = [EChar] ++ lists:reverse(Inner) ++ [SChar]
-                           ++ Acc,
-                       parse(Lvls, NewRem, NewAcc);
-                   [] -> {error, {expected, End}, lists:reverse(Inner)
-                          ++ [SChar] ++ Acc}
+               case parse([SubLvl|Lvls], Rem) of
+                   {ok, {parsed,_,Inner}, NewRem} ->
+                       case NewRem of
+                           [{_,RemPos}|_] ->
+                               EChar = {End,nextpos(End,RemPos)},
+                               NewAcc = [EChar] ++ lists:reverse(Inner)
+                                   ++ [SChar] ++ Acc,
+                               parse(Lvls, NewRem, NewAcc);
+                           [] ->
+                               {error, {expected, End}, lists:reverse(Inner)
+                                ++ [SChar] ++ Acc}
+                       end;
+                   Error ->
+                       Error
                end).
 
 -define(TOKEN_EXIT_OK(Lvl, Char),
@@ -160,8 +169,12 @@ parse(Lvls, Input) ->
         parse(Lvls = [Lvl|_], Tokens, Acc) ->
                ?DEBUG_PRINT("~p: unconditionally descending into ~p\n",
                             [Lvl, SubLvl]),
-               {ok, Child, Rem} = parse([SubLvl|Lvls], Tokens),
-               parse(Lvls, Rem, [Child|Acc])).
+               case parse([SubLvl|Lvls], Tokens) of
+                   {ok, Child, Rem} ->
+                       parse(Lvls, Rem, [Child|Acc]);
+                   Error ->
+                       Error
+               end).
 
 -define(ANY_KEEP_SWITCH(Old, New),
         parse([Old|Up], Tokens, Acc) ->
