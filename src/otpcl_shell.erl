@@ -10,6 +10,7 @@ start(State) ->
     spawn(?MODULE, simple_shell, [State]).
 
 simple_shell(State) ->
+    process_flag(trap_exit, true),
     show_banner(State),
     read(State, ps1(State), "").
 

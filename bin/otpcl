@@ -5,4 +5,4 @@
 # within the otpcl source tree.  It's good enough for now, though.
 
 ERL_LIBS='./_build/default/lib/otpcl' exec erl -noshell -noinput \
-        -s otpcl_init start
+        -user otpcl_init
