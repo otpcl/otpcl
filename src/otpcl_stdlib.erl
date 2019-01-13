@@ -32,13 +32,21 @@ set([Name, Val], {Funs, Vars}) ->
     {ok, {Funs, maps:put(Name, Val, Vars)}}.
 
 print([], State) ->
-    {ok, 'RETVAL', RetVal, State} = otpcl_env:get_var('RETVAL', State),
+    {RetVal, State} = get(['RETVAL'], State),
     {io:format("~p", [RetVal]), State};
-print([Text], State) ->
-    {io:format(Text), State};
-print([Text, Args], State) ->
-    {io:format(Text, Args), State}.
-
+print([Out], State) ->
+	case 'string?'([Out], State) of
+		{true, State} ->
+			{io:format(Out), State};
+		_ ->
+			{io:format("~p", [Out]), State}
+	end;
+print([Text|Args], State) ->
+	{io:format(Text, Args), State}.
+	
+'string?'([Text], State) ->
+	{is_binary(Text) or io_lib:char_list(Text), State}.
+    
 'if'([Test, Then], State) ->
     'if'([Test, Then, ""], State);
 'if'([Test, Then, Else], State) ->
