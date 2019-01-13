@@ -1,7 +1,8 @@
 -module(otpcl_stdlib).
 
--export([get/2, set/2, print/2, 'if'/2, truthy/1, unless/2, incr/2, decr/2,
-         import/2, eval/2, funget/2, funset/2, funcall/2, send/2]).
+-export([return/2, get/2, set/2, print/2, 'if'/2, truthy/1, unless/2,
+         incr/2, decr/2, import/2, eval/2, funget/2, funset/2, funcall/2,
+         send/2]).
 
 % Modules which provide Made For OTPCL™ functions can specify them
 % with the -otpcl_funs/1 module attribute, which will tell OTPCL's
@@ -9,7 +10,7 @@
 % (otherwise, it'll import them as if they're ordinary Erlang
 % functions, which might not be what you want if you actually do care
 % about the interpreter state).
--otpcl_funs([set, print, 'if', unless, incr, decr, import, eval]).
+-otpcl_funs([return, get, set, print, 'if', unless, incr, decr, import, eval]).
 
 % All OTPCL functions are represented behind-the-scenes as 2-arity
 % Erlang functions; the first argument is a list of the actual
@@ -19,6 +20,13 @@
 
 % This standard library is pretty bare-bones, but should provide an
 % adequate demonstration of how to define further functions.
+
+return([], State) ->
+    {ok, State};
+return([RetVal], State) ->
+    {RetVal, State};
+return(Args, State) ->
+    {Args, State}.
 
 get([Name], {Funs, Vars}) ->
     case maps:find(Name, Vars) of
@@ -35,17 +43,17 @@ print([], State) ->
     {RetVal, State} = get(['RETVAL'], State),
     {io:format("~p", [RetVal]), State};
 print([Out], State) ->
-	case 'string?'([Out], State) of
-		{true, State} ->
-			{io:format(Out), State};
-		_ ->
-			{io:format("~p", [Out]), State}
-	end;
+    case 'string?'([Out], State) of
+        {true, State} ->
+            {io:format(Out), State};
+        _ ->
+            {io:format("~p", [Out]), State}
+    end;
 print([Text|Args], State) ->
-	{io:format(Text, Args), State}.
-	
+    {io:format(Text, Args), State}.
+    
 'string?'([Text], State) ->
-	{is_binary(Text) or io_lib:char_list(Text), State}.
+    {is_binary(Text) or io_lib:char_list(Text), State}.
     
 'if'([Test, Then], State) ->
     'if'([Test, Then, ""], State);
