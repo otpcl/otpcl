@@ -2,7 +2,7 @@
 
 -export([return/2, get/2, set/2, print/2, 'if'/2, truthy/1, unless/2,
          incr/2, decr/2, import/2, eval/2, funget/2, funset/2, funcall/2,
-         send/2]).
+         funwrap/2, send/2]).
 
 % Modules which provide Made For OTPCL™ functions can specify them
 % with the -otpcl_funs/1 module attribute, which will tell OTPCL's
@@ -10,7 +10,8 @@
 % (otherwise, it'll import them as if they're ordinary Erlang
 % functions, which might not be what you want if you actually do care
 % about the interpreter state).
--otpcl_funs([return, get, set, print, 'if', unless, incr, decr, import, eval]).
+-otpcl_funs([return, get, set, print, 'if', unless, incr, decr, import, eval,
+             funget, funset, funcall, funwrap, send]).
 
 % All OTPCL functions are represented behind-the-scenes as 2-arity
 % Erlang functions; the first argument is a list of the actual
@@ -141,6 +142,13 @@ otpcl_funs([{_,_}|Rem]) ->
 otpcl_funs([]) ->
     no_otpcl_funs.
 
+eval([erlang, Txt], State) when is_binary(Txt) ->
+    eval([erlang, binary_to_list(Txt)], State);
+eval([erlang, Txt], State) ->
+    {ok, Tokens, _} = erl_scan:string(Txt),
+    {ok, Parsed} = erl_parse:parse_exprs(Tokens),
+    {value, Result, _} = erl_eval:exprs(Parsed, []),
+    {Result, State};
 eval([Name, Args], State) ->
     {Fun, State} = funget([Name], State),
     apply(Fun, [Args, State]);
@@ -161,6 +169,12 @@ funset([Name, Fun], {Funs, Vars}) when is_function(Fun) ->
 funcall([Name, Args], State) ->
     {Fun, State} = funget([Name], State),
     apply(Fun, [Args, State]).
+
+funwrap([Fun], State) when is_function(Fun) ->
+    Wrapped = fun (Args, FunState) ->
+        {apply(Fun, Args), FunState}
+    end,
+    {Wrapped, State}.
 
 send([Pid, Msg], State) ->
     Pid ! Msg,
