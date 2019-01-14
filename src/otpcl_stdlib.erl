@@ -166,6 +166,8 @@ funget([Name], {Funs, Vars}) ->
 funset([Name, Fun], {Funs, Vars}) when is_function(Fun) ->
     {ok, {maps:put(Name, Fun, Funs), Vars}}.
 
+funcall([Fun, Args], State) when is_function(Fun) ->
+    apply(Fun, [Args, State]);
 funcall([Name, Args], State) ->
     {Fun, State} = funget([Name], State),
     apply(Fun, [Args, State]).
