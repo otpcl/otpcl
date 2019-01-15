@@ -1,12 +1,23 @@
 -module(otpcl_shell).
 
+-if(?OTP_RELEASE >= 21).
+-define(CATCH(Type, Reason), Type:Reason:Stacktrace).
+-define(HANDLE(Type, Reason),
+        show_error(Type, Reason, Stacktrace),
+        read(State, ps1(State), "")).
+-else.
+-define(CATCH(Type, Reason), Type:Reason).
+-define(HANDLE(Type, Reason),
+        show_error(Type, Reason, erlang:get_stacktrace()),
+        read(State, ps1(State), "")).
+-endif.
+
 -export([start/0, start/1, simple_shell/1]).
 
 start() ->
     start(otpcl_env:default_state()).
 
 start(State) ->
-    %% spawn(fun () -> shell_init(State) end).
     spawn(?MODULE, simple_shell, [State]).
 
 simple_shell(State) ->
@@ -24,22 +35,20 @@ parse(State, Input) ->
         {error, {expected, _}, _} ->
             read(State, ps2(State), Input)
     catch
-        Anything:Else ->
-            show_error(Anything, Else),
-            read(State, ps1(State), "")
+        ?CATCH(Anything, Else) ->
+            ?HANDLE(Anything, Else)
     end.
 
 eval(State, Tree) ->
     try otpcl_eval:interpret(Tree, State) of
         {RetVal, NewState} ->
             show_retval(RetVal),
-            read(NewState, ps1(NewState), "");
-        AnythingElse ->
-            show_error(eval, AnythingElse)
+            read(NewState, ps1(NewState), "")
     catch
-        Anything:Else ->
-            show_error(Anything, Else),
-            read(State, ps1(State), "")
+        ?CATCH(error, {badmatch,{error,{Rsn,Val},State}}) ->
+            ?HANDLE(Rsn, Val);
+        ?CATCH(Anything, Else) ->
+            ?HANDLE(Anything, Else)
     end.
 
 %% Prompts.  TODO/FIXME: actually read the PS1 and PS2 variables from
@@ -59,5 +68,20 @@ show_banner(_) ->
 show_retval(RetVal) ->
     io:format("~p~n", [RetVal]).
 
-show_error(Step, Reason) ->
-    io:format("~p error: ~p~n", [Step, Reason]).
+show_error(Step, Reason, Stacktrace) ->
+    io:format("~p: ~p~nStacktrace:~n", [Step, Reason]),
+    show_trace(Stacktrace).
+
+show_trace([{Mod,Fun,Arity,Locs}|Rem]) ->
+    io:format("  ~p:~p/~p~n", [Mod,Fun,Arity]),
+    show_trace_locs(Locs),
+    show_trace(Rem);
+show_trace([]) ->
+    ok.
+
+show_trace_locs([{Type,Val}|Rem]) ->
+    io:format("    ~p: ~p~n", [Type,Val]),
+    show_trace_locs(Rem);
+show_trace_locs([]) ->
+    ok.
+
