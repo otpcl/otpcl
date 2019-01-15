@@ -60,9 +60,10 @@ interpret({parsed, braced, Tokens}, _State) ->
 interpret({parsed, backquoted, Tokens}, _State) ->
     make_charstring(Tokens);
 interpret({parsed, var_unquoted, Tokens}, State) ->
-    {Val, State} = otpcl_stdlib:get([make_atom(Tokens)], State),
-    Val;
+    interpret({parsed, var, Tokens}, State);
 interpret({parsed, var_braced, Tokens}, State) ->
+    interpret({parsed, var, Tokens}, State);
+interpret({parsed, var, Tokens}, State) ->
     {Val, State} = otpcl_stdlib:get([make_atom(Tokens)], State),
     Val;
 % FIXME: any state changes here (new/modified functions and variables,
@@ -75,11 +76,11 @@ interpret({parsed, tuple, Items}, State) ->
     list_to_tuple([interpret(I, State) || I <- Items]);
 interpret({parsed, funcall, Words}, State) ->
     [Name|Args] = [interpret(I, State) || I <- Words],
-    {Res, _} = otpcl_stdlib:funcall([Name, Args], State),
+    {Res, _} = otpcl_stdmeta:'fun'([call, Name, Args], State),
     Res;
 interpret({parsed, command, Words}, State) ->
     [Name|Args] = [interpret(I, State) || I <- Words],
-    otpcl_stdlib:funcall([Name, Args], State);
+    otpcl_stdmeta:'fun'([call, Name, Args], State);
 interpret({parsed, comment, _}, State) ->
     {ok, State};
 interpret({parsed, program, [Cmd|Rest]}, State) ->
@@ -89,9 +90,9 @@ interpret({parsed, program, [Cmd|Rest]}, State) ->
 interpret({parsed, program, []}, State) ->
     otpcl_stdlib:get(['RETVAL'], State);
 interpret({parsed, Type, Data}, State) ->
-    {error, unknown_node_type, Type, Data, State};
+    {error, {unknown_node_type, Type, Data}, State};
 interpret(InvalidNode, State) ->
-    {error, not_an_otpcl_parse_node, InvalidNode, State}.
+    {error, {not_an_otpcl_parse_node, InvalidNode}, State}.
 
 
 % And some nice friendly wrappers around that interpreter

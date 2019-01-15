@@ -4,6 +4,7 @@
 
 default_state() ->
     State0 = {#{}, #{}},
-    {{ok, _}, State1} = otpcl_stdlib:import([otpcl_stdlib], State0),
-    {ok, State2} = otpcl_stdlib:set(['RETVAL', ok], State1),
-    State2.
+    {{ok, _}, State1} = otpcl_stdmeta:import([otpcl_stdlib], State0),
+    {{ok, _}, State2} = otpcl_stdmeta:import([otpcl_stdmeta], State1),
+    {ok, State3} = otpcl_stdlib:set(['RETVAL', ok], State2),
+    State3.
