@@ -184,7 +184,7 @@ Or as individual functions:
 ```
 otpcl> import string (split uppercase)
 ok
-otpcl> split [uppercase "foo,bar,baz"], ","
+otpcl> split [uppercase "foo,bar,baz"] ","
 [<<"FOO">>,<<"BAR,BAZ">>]
 ```
 
