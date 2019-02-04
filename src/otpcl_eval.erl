@@ -1,6 +1,7 @@
 -module(otpcl_eval).
 
--export([interpret/1, interpret/2, eval/1, eval/2, eval_file/1, eval_file/2]).
+-export([interpret/1, interpret/2, eval/1, eval/2, eval_file/1, eval_file/2,
+         make_charstring/1, make_binstring/1, make_atomic/1, make_atom/1]).
 
 -ifdef(DEBUG).
 -define(DEBUG_PRINT(Msg, Args), io:format(Msg, Args)).
@@ -78,6 +79,8 @@ interpret({parsed, funcall, Words}, State) ->
     [Name|Args] = [interpret(I, State) || I <- Words],
     {Res, _} = otpcl_stdmeta:'fun'([call, Name, Args], State),
     Res;
+interpret({parsed, command, []}, State) ->
+    {ok, State};
 interpret({parsed, command, Words}, State) ->
     [Name|Args] = [interpret(I, State) || I <- Words],
     otpcl_stdmeta:'fun'([call, Name, Args], State);
