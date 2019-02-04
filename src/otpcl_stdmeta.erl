@@ -1,8 +1,8 @@
 -module(otpcl_stdmeta).
 
--export([import/2, eval/2, 'fun'/2]).
+-export([import/2, eval/2, 'fun'/2, def/2]).
 
--otpcl_funs([import, eval, 'fun']).
+-otpcl_funs([import, eval, 'fun', def]).
 
 %% import
 
@@ -85,3 +85,116 @@ eval([Txt], State) ->
                       {apply(Fun, Args), FunState}
               end,
     {Wrapped, State}.
+
+
+% def is pretty complicated, since we basically have to write a
+% mini-interpreter specifically for parsing the argspecs.
+
+def(Args, State) ->
+    def(Args, State, []).
+
+% TODO: allow guards
+def([Name, <<"">>, Body | Clauses], State, Acc) ->
+    def([Name, <<"# EMPTY">>, Body | Clauses], State, Acc);
+def([Name, ArgSpec, Body | Clauses], State, Acc) ->
+    {ok, {parsed, program, SubClauses}, []} = otpcl_parse:parse(ArgSpec),
+    BuiltSCs = [build_subclause(SC, Body) || SC <- SubClauses],
+    def([Name | Clauses], State, BuiltSCs ++ Acc);
+def([Name], State, Acc) ->
+    Clauses = lists:reverse(Acc),
+    % FIXME: use a sane line number here instead of defaulting to line
+    % 0.
+    Eval = {'fun', 0, {clauses, Clauses}},
+    {value, Fun, _} = erl_eval:expr(Eval, []),
+    'fun'([set, Name, Fun], State).
+
+build_subclause({parsed, comment, _}, Body) ->
+    Args = erl_parse:abstract([]),
+    {clause, 0, [Args, {var, 0, 'State0'}], [], build_body([], Body)};
+build_subclause({parsed, command, Words}, Body) ->
+    % FIXME: use a sane line number here instead of defaulting to line
+    % 0.
+    {Args, Vars} = build_args(Words),
+    {clause, 0, [Args, {var, 0, 'State0'}], [], build_body(Vars, Body)}.
+
+build_args(Words) ->
+    build_args(Words, [], []).
+
+build_args([{parsed, var_unquoted, Tokens}|Rem], Acc, Vars) ->
+    build_args([{parsed, var, Tokens}|Rem], Acc, Vars);
+build_args([{parsed, var_braced, Tokens}|Rem], Acc, Vars) ->
+    build_args([{parsed, var, Tokens}|Rem], Acc, Vars);
+build_args([{parsed, var, Tokens}|Rem], Acc, Vars) ->
+    Var = otpcl_eval:make_atom(Tokens),
+    build_args(Rem, [{var, 0, Var}|Acc], [Var|Vars]);
+% Tuples and lists might have to-be-bound variables inside them, so we
+% can't just shove 'em into erl_parse:abstract/1.
+build_args([{parsed, tuple, Items}|Rem], Acc, Vars) ->
+    {ItemArgs, ItemVars} = build_args(Items),
+    build_args(Rem, [{tuple, 0, ItemArgs}|Acc], ItemVars ++ Vars);
+% Of *course* Erlang can't just provide a simple {list,LINE,L} thing;
+% it just *has* to be all lispy with its cons cells and such.
+build_args([{parsed, list, Items}|Rem], Acc, Vars) ->
+    build_args([{parsed, list, lists:reverse(Items), {nil,1}}|Rem], Acc, Vars);
+build_args([{parsed, list, [I|Items], Conses}|Rem], Acc, Vars) ->
+    {ConsInner, ConsVars} = build_args(I),
+    Cons = {cons, 0, ConsInner, Conses},
+    build_args([{parsed, list, Items, Cons}|Rem], Acc, ConsVars ++ Vars);
+build_args([{parsed, list, [], Conses}|Rem], Acc, Vars) ->
+    build_args(Rem, [Conses|Acc], Vars);
+% TODO: do something cool with funcalls in argspecs instead of just
+% ignoring them.  Maybe they could be used for guards?
+build_args([{parsed, funcall, _}|Rem], Acc, Vars) ->
+    build_args(Rem, Acc, Vars);
+build_args([{parsed, comment, _}|Rem], Acc, Vars) ->
+    build_args(Rem, Acc, Vars);
+% All other word types should be safe to blindly interpret and shove
+% into the Erlang parse tree we're building.
+build_args([Arg = {parsed, _, _}|Rem], Acc, Vars) ->
+    Interpreted = otpcl_eval:interpret(Arg),
+    Abstracted = erl_parse:abstract(Interpreted),
+    build_args(Rem, [Abstracted|Acc], Vars);
+% We're done
+build_args([], Acc, Vars) ->
+    {consify(Acc, {nil,0}), Vars};
+% Catch-all for anything else.
+build_args(Rem, Acc, Vars) ->
+    {error, invalid_argspec, Rem, Acc, Vars}.
+
+consify([Item|List], Conses) ->
+    consify(List, {cons, 0, Item, Conses});
+consify([], Conses) ->
+    Conses.
+
+build_body(Vars, Body) ->
+    build_body(Vars, Body, [], 0).
+
+build_body([Var|Vars], Body, BuiltVars, StateIdx) ->
+    Left = build_match_left(StateIdx + 1),
+    Right = build_match_right(Var, StateIdx),
+    Match = {match, 0, Left, Right},
+    build_body(Vars, Body, [Match|BuiltVars], StateIdx + 1);
+build_body([], Body, BuiltVars, StateIdx) ->
+    Wrapped = erl_parse:abstract([Body]),
+    StateN = {var, 0, state_name(StateIdx)},
+    Mod = {atom, 0, otpcl_stdmeta},
+    Fun = {atom, 0, eval},
+    Call = {call, 1, {remote, 1, Mod, Fun}, [Wrapped, StateN]},
+    lists:reverse([Call|BuiltVars]).
+
+build_match_left(StateIdx) ->
+    State = {var, 0, state_name(StateIdx)},
+    Empty = {var, 0, '_'},
+    {tuple, 0, [Empty, State]}.
+
+build_match_right(VarName, StateIdx) ->
+    StateName = state_name(StateIdx),
+    ValCons = {cons, 0, {var, 0, VarName}, {nil, 0}},
+    NameCons = {cons, 0, {atom, 0, VarName}, ValCons},
+    StateVar = {var, 0, StateName},
+    FunRef = {remote, 0, {atom, 0, otpcl_stdlib}, {atom, 0, set}},
+    Args = [NameCons, StateVar],
+    {call, 1, FunRef, Args}.
+
+state_name(StateIdx) ->
+    list_to_atom("State" ++ integer_to_list(StateIdx)).

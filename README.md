@@ -141,9 +141,8 @@ Stacktrace:
     line: 46
 ```
 
-We can define new Erlang functions (TODO: support writing new
-functions in OTPCL) and include them as functions for our interpreter,
-both from the Erlang side:
+We can define new Erlang functions and include them as functions for
+our interpreter, both from the Erlang side:
 
 ```erlang
 
@@ -169,6 +168,33 @@ otpcl> fun set sum [eval erlang {
 ok
 otpcl> sum 1 2 3 4 5
 15
+```
+
+And of course, no programming language would be complete if we can't
+define functions in that language:
+
+```
+otpcl> def howdy {$pardner} {
+  ...> return <howdy $pardner>
+  ...> }
+ok
+otpcl> howdy buckaroo
+{howdy,buckaroo}
+otpcl> def multi-test {a} {
+  ...> return "It's an 'a'!"
+  ...> } {1} {
+  ...> return "It's a 1!"
+  ...> } {$else} {
+  ...> return "It's something else..."
+  ...> }
+ok
+otpcl> multi-test a
+<<"It's an 'a'!">>
+otpcl> multi-test 1
+<<"It's a 1!">>
+otpcl> multi-test asdf
+<<"It's something else...">>
+
 ```
 
 Or, as demonstrated above, you can even import them, whether as whole
