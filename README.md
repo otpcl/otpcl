@@ -27,10 +27,12 @@ language (note that said language will need to be able to see OTPCL's
 compiled libs; until I get around to publishing OTPCL on Hex, you'll
 have to point to it with the ERL_LIBS variable).
 
-For example, in Erlang:
+For example, in Erlang (w/ rebar3):
 
 ```
-$ ERL_LIBS='./_build/default/lib/otpcl' erl
+$ grep otpcl rebar.config
+{deps, [{otpcl, "0.1.1"}]}.
+$ rebar3 shell
 Eshell V10.0  (abort with ^G)
 1> otpcl:eval("import io; format {Hello, world!~n}").
 Hello, world!
@@ -39,10 +41,12 @@ Hello, world!
       interpreter state when it's done executing stuff ... ]
 ```
 
-And again, in Elixir:
+And again, in Elixir (w/ Mix):
 
 ```
-$ ERL_LIBS='./_build/default/lib/otpcl' iex  # TODO: hexify this
+$ grep otpcl mix.exs
+      {;otpcl, "~> 0.1.1"}
+$ iex -S mix
 Interactive Elixir (1.7.3) - press Ctrl+C to exit (type h() ENTER for help)
 iex(1)> :otpcl.eval("import Elixir.IO; puts {Hello, world!}")
 Hello, world!
