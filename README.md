@@ -24,8 +24,9 @@ ok
 
 You can also use it from an existing project in some other BEAM-based
 language (note that said language will need to be able to see OTPCL's
-compiled libs; until I get around to publishing OTPCL on Hex, you'll
-have to point to it with the ERL_LIBS variable).
+compiled libs; this happens automatically if you're doing things with
+Hex like described below, but otherwise, you'll have to point to it
+with the ERL_LIBS variable).
 
 For example, in Erlang (w/ rebar3):
 
