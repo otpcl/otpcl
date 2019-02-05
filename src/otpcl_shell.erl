@@ -15,7 +15,7 @@
 -export([start/0, start/1, simple_shell/1]).
 
 start() ->
-    start(otpcl_env:default_state()).
+    start(shell_init_state(otpcl_env:default_state())).
 
 start(State) ->
     spawn(?MODULE, simple_shell, [State]).
@@ -54,11 +54,21 @@ eval(State, Tree) ->
 %% Prompts.  TODO/FIXME: actually read the PS1 and PS2 variables from
 %% the provided state (which is currently ignored).
 
-ps1(_) ->
-    "otpcl> ".
+ps1(State) ->
+    case otpcl_stdlib:get(['PS1'], State) of
+        {Prompt, State} ->
+            Prompt;
+        _ ->
+            "otpcl> "
+    end.
 
-ps2(_) ->
-    "  ...> ".
+ps2(State) ->
+    case otpcl_stdlib:get(['PS2'], State) of
+        {Prompt, State} ->
+            Prompt;
+        _ ->
+            "  ...> "
+    end.
 
 %% Show stuff
 
@@ -85,3 +95,9 @@ show_trace_locs([{Type,Val}|Rem]) ->
 show_trace_locs([]) ->
     ok.
 
+
+shell_init_state(State0) ->
+    {_, State1} = otpcl_stdmeta:import([otpcl_stdshell], State0),
+    {_, State2} = otpcl_stdlib:set(['PS1', "otpcl> "], State1),
+    {_, State3} = otpcl_stdlib:set(['PS2', "  ...> "], State2),
+    State3.
