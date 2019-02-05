@@ -1,6 +1,6 @@
 {application, otpcl,
  [{description, "Open Telecom Platform Command Language"},
-  {vsn, "0.1.1"},
+  {vsn, "0.1.2"},
   {modules, [otpcl,
              otpcl_env,
              otpcl_eval,
@@ -15,4 +15,4 @@
                  stdlib]},
   {licenses, ["ISC"]},
   {links, [{"Bitbucket", "https://bitbucket.org/YellowApple/otpcl"},
-           {"GitHub", "https://github.com/YellowApple/otpcl"}]}]}.
+           {"GitHub", "https://github.com/otpcl/otpcl"}]}]}.

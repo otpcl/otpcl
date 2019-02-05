@@ -31,7 +31,7 @@ For example, in Erlang (w/ rebar3):
 
 ```
 $ grep otpcl rebar.config
-{deps, [{otpcl, "0.1.1"}]}.
+{deps, [{otpcl, "0.1.2"}]}.
 $ rebar3 shell
 Eshell V10.0  (abort with ^G)
 1> otpcl:eval("import io; format {Hello, world!~n}").
@@ -45,7 +45,7 @@ And again, in Elixir (w/ Mix):
 
 ```
 $ grep otpcl mix.exs
-      {;otpcl, "~> 0.1.1"}
+      {;otpcl, "~> 0.1.2"}
 $ iex -S mix
 Interactive Elixir (1.7.3) - press Ctrl+C to exit (type h() ENTER for help)
 iex(1)> :otpcl.eval("import Elixir.IO; puts {Hello, world!}")
