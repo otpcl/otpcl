@@ -85,7 +85,7 @@ interpret({parsed, command, Words}, State) ->
     [Name|Args] = [interpret(I, State) || I <- Words],
     otpcl_stdmeta:'fun'([call, Name, Args], State);
 interpret({parsed, comment, _}, State) ->
-    {ok, State};
+    otpcl_stdlib:get(['RETVAL'], State);
 interpret({parsed, program, [Cmd|Rest]}, State) ->
     {RetVal, NewState} = interpret(Cmd, State),
     {ok, RetState} = otpcl_stdlib:set(['RETVAL', RetVal], NewState),
