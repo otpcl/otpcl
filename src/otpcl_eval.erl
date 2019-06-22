@@ -169,7 +169,7 @@ interpret({parsed, funcall, Words}, State) ->
     {Res, _} = otpcl_meta:apply(Cmd, State),
     Res;
 interpret({parsed, command, []}, State) ->
-    {ok, State};
+    otpcl_meta:get(['RETVAL'], State);
 interpret({parsed, command, Words}, State) ->
     Cmd = [interpret(I, State) || I <- Words],
     otpcl_meta:apply(Cmd, State);
