@@ -1,103 +1,132 @@
 -module(otpcl_shell).
 
--if(?OTP_RELEASE >= 21).
--define(CATCH(Type, Reason), Type:Reason:Stacktrace).
--define(HANDLE(Type, Reason),
-        show_error(Type, Reason, Stacktrace),
-        read(State, ps1(State), "")).
--else.
--define(CATCH(Type, Reason), Type:Reason).
--define(HANDLE(Type, Reason),
-        show_error(Type, Reason, erlang:get_stacktrace()),
-        read(State, ps1(State), "")).
--endif.
+-export([chgrp/2, chmod/2, chown/2, source/2, cp/2, rmdir/2, rm/2, cwd/2, ls/2,
+         dir/2, mkdir/2, ln/2, cd/2, env/2, trap/2, run/2]).
 
--export([start/0, start/1, simple_shell/1]).
+-otpcl_cmds([chgrp, chmod, chown, source, cp, rmdir, rm, cwd, ls, dir, mkdir, ln,
+             cd, env, trap, run]).
 
-start() ->
-    start(shell_init_state(otpcl_env:default_state())).
-
-start(State) ->
-    spawn(?MODULE, simple_shell, [State]).
-
-simple_shell(State) ->
-    process_flag(trap_exit, true),
-    show_banner(State),
-    read(State, ps1(State), "").
-
-read(State, Prompt, Acc) ->
-    parse(State, Acc ++ io:get_line(Prompt)).
-
-parse(State, Input) ->
-    try otpcl_parse:parse(Input) of
-        {ok, Tree, []} ->
-            eval(State, Tree);
-        {error, {expected, _}, _} ->
-            read(State, ps2(State), Input)
-    catch
-        ?CATCH(Anything, Else) ->
-            ?HANDLE(Anything, Else)
-    end.
-
-eval(State, Tree) ->
-    try otpcl_eval:interpret(Tree, State) of
-        {RetVal, NewState} ->
-            show_retval(RetVal),
-            read(NewState, ps1(NewState), "")
-    catch
-        ?CATCH(error, {badmatch,{error,{Rsn,Val},State}}) ->
-            ?HANDLE(Rsn, Val);
-        ?CATCH(Anything, Else) ->
-            ?HANDLE(Anything, Else)
-    end.
-
-%% Prompts.  TODO/FIXME: actually read the PS1 and PS2 variables from
-%% the provided state (which is currently ignored).
-
-ps1(State) ->
-    case otpcl_stdlib:get(['PS1'], State) of
-        {Prompt, State} ->
-            Prompt;
-        _ ->
-            "otpcl> "
-    end.
-
-ps2(State) ->
-    case otpcl_stdlib:get(['PS2'], State) of
-        {Prompt, State} ->
-            Prompt;
-        _ ->
-            "  ...> "
-    end.
-
-%% Show stuff
-
-show_banner(_) ->
-    io:format("OTPCL Shell (WIP!)~n~n").
-
-show_retval(RetVal) ->
-    io:format("~p~n", [RetVal]).
-
-show_error(Step, Reason, Stacktrace) ->
-    io:format("~p: ~p~nStacktrace:~n", [Step, Reason]),
-    show_trace(Stacktrace).
-
-show_trace([{Mod,Fun,Arity,Locs}|Rem]) ->
-    io:format("  ~p:~p/~p~n", [Mod,Fun,Arity]),
-    show_trace_locs(Locs),
-    show_trace(Rem);
-show_trace([]) ->
-    ok.
-
-show_trace_locs([{Type,Val}|Rem]) ->
-    io:format("    ~p: ~p~n", [Type,Val]),
-    show_trace_locs(Rem);
-show_trace_locs([]) ->
-    ok.
+chgrp([Gid, Name|Names], State) ->
+    case file:change_group(Name, Gid) of
+        ok ->
+            chgrp([Gid|Names], State);
+        Err ->
+            {Err, State}
+    end;
+chgrp([_], State) ->
+    {ok, State}.
 
 
-shell_init_state(State0) ->
-    {_, State1} = otpcl_stdmeta:import([otpcl_stdshell], State0),
-    {_, State2} = otpcl_stdlib:set(['PS1', "otpcl> "], State1),
-    {_, State3} = otpcl_stdlib:set(['PS2', "  ...> "], State2),
-    State3.
+chmod([Mode, Name|Names], State) ->
+    case file:change_mode(Name, Mode) of
+        ok ->
+            chmod([Mode|Names], State);
+        Err ->
+            {Err, State}
+    end;
+chmod([_], State) ->
+    {ok, State}.
+
+chown([Uid, Name|Names], State) ->
+    case file:change_owner(Name, Uid) of
+        ok ->
+            chown([Uid|Names], State);
+        Err ->
+            {Err, State}
+    end;
+chown([_], State) ->
+    {ok, State}.
+
+source([Filename], State) ->
+    otpcl_eval:eval_file(Filename, State).
+
+cp([Src, Dest|Dests], State) ->
+    case file:copy(Src, Dest) of
+        {ok, _} ->
+            cp([Src|Dests], State);
+        Err ->
+            {Err, State}
+    end;
+cp([_], State) ->
+    {ok, State}.
+
+rmdir([Dir|Dirs], State) ->
+    case file:del_dir(Dir) of
+        ok ->
+            rmdir(Dirs, State);
+        Err ->
+            {Err, State}
+    end;
+rmdir([], State) ->
+    {ok, State}.
+
+rm([Name|Names], State) ->
+    case file:delete(Name) of
+        ok ->
+            rm(Names, State);
+        Err ->
+            {Err, State}
+    end;
+rm([], State) ->
+    {ok, State}.
+
+cwd([], State) ->
+    {file:get_cwd(), State}.
+
+ls([Dir], State) ->
+    {file:list_dir(Dir), State};
+ls(['-a', Dir], State) ->
+    {file:list_dir_all(Dir), State}.
+
+dir(Args, State) ->
+    ls(Args, State).
+
+mkdir([Dir|Dirs], State) ->
+    case file:make_dir(Dir) of
+        ok ->
+            mkdir(Dirs, State);
+        Err ->
+            {Err, State}
+    end;
+mkdir([], State) ->
+    {ok, State}.
+
+ln(['-s'|Args], State) ->
+    ln_s(Args, State);
+ln([Src, Dest|Dests], State) ->
+    case file:make_link(Src, Dest) of
+        ok ->
+            ln([Src|Dests], State);
+        Err ->
+            {Err, State}
+    end;
+ln([_], State) ->
+    {ok, State}.
+
+ln_s([Src, Dest|Dests], State) ->
+    case file:make_symlink(Src, Dest) of
+        ok ->
+            ln_s([Src|Dests], State);
+        Err ->
+            {Err, State}
+    end;
+ln_s([_], State) ->
+    {ok, State}.
+
+cd([Dir], State) ->
+    {file:set_cwd(Dir), State}.
+
+env([get], State) ->
+    {os:getenv(), State};
+env([get, Name], State) ->
+    {os:getenv(Name), State};
+env([set, Name, Value], State) ->
+    {os:putenv(Name, Value), State};
+env([unset, Name], State) ->
+    {os:unsetenv(Name), State}.
+
+trap([Signal, Option], State) ->
+    {os:set_signal(Signal, Option), State}.
+
+run([Cmd], State) ->
+    {os:cmd(Cmd), State}.

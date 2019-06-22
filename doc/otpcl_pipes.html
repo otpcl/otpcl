@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module otpcl_pipes</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module otpcl_pipes</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>OTPCL pipes up the wazoo.
+
+
+<h2><a name="description">Description</a></h2><p>OTPCL pipes up the wazoo.  OTPCL treats any command that starts with a
+ pipe character (<code>|</code>) as a command terminator - that is, it'll treat all the 
+words before it as one command, then resume command parsing.  This is a bit 
+tricky to describe in English, so it's easier to just show you that this:</p>
+
+ <pre> foo | bar | baz</pre>
+
+ <p>...is equivalent to this:</p>
+
+ <pre> foo
+ | bar
+ | baz</pre>
+
+ <p>In this case, the <code>|</code> happens to take the return value of the
+ previously-executed command (i.e. the <code>$RETVAL</code> variable) and pass it as the 
+first argument to the command named in its own first argument.  That is, both 
+of the above are equivalent to this:</p>
+
+ <pre> baz [bar [foo]]</pre>
+
+ Of course, the command doesn't necessarily <em>have</em> to do this sort of
+ chaining (or even pay attention to <code>$RETVAL</code> at all), but OTPCL's pipe support
+ exists specifically to facilitate this sort of pattern, as exemplified by the
+ various commands defined in this here module.
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#%7c%21-2">'|!'/2</a></td><td>"Send" operator.</td></tr>
+<tr><td valign="top"><a href="#%7c%23-2">'|#'/2</a></td><td>"Insert" operator.</td></tr>
+<tr><td valign="top"><a href="#%7c%23%2a-2">'|#*'/2</a></td><td>"Insert Splat" operator.</td></tr>
+<tr><td valign="top"><a href="#%7c%26-2">'|&amp;'/2</a></td><td>"And Also" operator.</td></tr>
+<tr><td valign="top"><a href="#%7c%2a-2">'|*'/2</a></td><td>"Splat" operator.</td></tr>
+<tr><td valign="top"><a href="#%7c%7c-2">'||'/2</a></td><td>"Or Else" operator.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="%7c%21-2">'|!'/2</a></h3>
+<div class="spec">
+<p><tt>'|!'(X1, State) -&gt; any()</tt></p>
+</div><p>"Send" operator.  Send the previous command's return value to the
+ specified process.</p>
+
+<h3 class="function"><a name="%7c%23-2">'|#'/2</a></h3>
+<div class="spec">
+<p><tt>'|#'(Args, State) -&gt; any()</tt></p>
+</div><p><p>"Insert" operator.  Splits its arguments at the specified position, 
+inserts the previous command's return value between them, and invokes the 
+resulting list of words as a command.  That is:</p>
+
+ <pre> foo |# 0 bar baz  # -&gt; [foo] bar baz
+ foo |# 1 bar baz  # -&gt; bar [foo] baz
+ foo |# 2 bar baz  # -&gt; bar baz [foo]</pre>
+
+ Note that, for obvious reasons, trying to insert an argument into a position
+ greater than the number of existing arguments will result in an error.</p>
+
+<h3 class="function"><a name="%7c%23%2a-2">'|#*'/2</a></h3>
+<div class="spec">
+<p><tt>'|#*'(Args, State) -&gt; any()</tt></p>
+</div><p>"Insert Splat" operator.  Like <code>|#`, but expands the previous command</code>s
+ return value during insertion (instead of just inserting the list as a single
+ argument).</p>
+
+<h3 class="function"><a name="%7c%26-2">'|&amp;'/2</a></h3>
+<div class="spec">
+<p><tt>'|&amp;'(Args, State) -&gt; any()</tt></p>
+</div><p>"And Also" operator.  If the previous command returned a "truthy" value,
+ run the arguments as a command.</p>
+
+<h3 class="function"><a name="%7c%2a-2">'|*'/2</a></h3>
+<div class="spec">
+<p><tt>'|*'(Args, State) -&gt; any()</tt></p>
+</div><p>"Splat" operator.  If the previous command returned a list, and there are
+ no words after the "splat", then treat the first element as a command name,
+ the rest as its arguments, and run it.  Else, treat the first argument as the
+ command name, pass the list elements as arguments, then pass any other passed
+ arguments as additional arguments, then run the resulting command.</p>
+
+<h3 class="function"><a name="%7c%7c-2">'||'/2</a></h3>
+<div class="spec">
+<p><tt>'||'(Args, State) -&gt; any()</tt></p>
+</div><p>"Or Else" operator.  If the previous command returned a non-"truthy"
+ value, run the arguments as a command.</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>

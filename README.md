@@ -32,7 +32,7 @@ For example, in Erlang (w/ rebar3):
 
 ```
 $ grep otpcl rebar.config
-{deps, [{otpcl, "0.1.2"}]}.
+{deps, [{otpcl, "0.2.0"}]}.
 $ rebar3 shell
 Eshell V10.0  (abort with ^G)
 1> otpcl:eval("import io; format {Hello, world!~n}").
@@ -46,7 +46,7 @@ And again, in Elixir (w/ Mix):
 
 ```
 $ grep otpcl mix.exs
-      {;otpcl, "~> 0.1.2"}
+      {:otpcl, "~> 0.2.0"}
 $ iex -S mix
 Interactive Elixir (1.7.3) - press Ctrl+C to exit (type h() ENTER for help)
 iex(1)> :otpcl.eval("import Elixir.IO; puts {Hello, world!}")
@@ -111,15 +111,15 @@ And it can interpret that language, too:
 
 ```erlang
 
-3> otpcl:eval("set foo 1; set bar 2; set baz 3; incr foo").
-{2,
+3> otpcl:eval("set foo 1; set bar 2; set baz 3").
+{3,
  {#{decr => fun otpcl_stdlib:decr/2,
     'if' => fun otpcl_stdlib:if/2,
     incr => fun otpcl_stdlib:incr/2,
     print => fun otpcl_stdlib:print/2,
     set => fun otpcl_stdlib:set/2,
     unless => fun otpcl_stdlib:unless/2},
-  #{'RETVAL' => 2,bar => 2,baz => 3,foo => 2}}}
+  #{'RETVAL' => 3,bar => 2,baz => 3,foo => 1}}}
 
 ```
 
@@ -153,7 +153,7 @@ our interpreter, both from the Erlang side:
 
 4> Sum = fun (Nums, State) -> {lists:sum(Nums), State} end.
 #Fun<erl_eval.12.127694169>
-5> {ok, State} = otpcl_stdmeta:'fun'([set, sum, Sum], otpcl_env:default_state()).
+5> {ok, State} = otpcl_meta:cmd([sum, Sum], otpcl_env:default_state()).
 [ ... interpreter state output ... ]
 6> {RetVal, NewState} = otpcl:eval("sum 1 2 3 4 5", State).
 [ ... interpreter state output ... ]
@@ -162,30 +162,17 @@ our interpreter, both from the Erlang side:
 
 ```
 
-And from the OTPCL side:
-
-```
-otpcl> fun set sum [eval erlang {
-  ...> fun (Nums, State) ->
-  ...>   {lists:sum(Nums), State}
-  ...> end.
-  ...> }]
-ok
-otpcl> sum 1 2 3 4 5
-15
-```
-
 And of course, no programming language would be complete if we can't
 define functions in that language:
 
 ```
-otpcl> def howdy {$pardner} {
+otpcl> cmd howdy {$pardner} {
   ...> return <howdy $pardner>
   ...> }
 ok
 otpcl> howdy buckaroo
 {howdy,buckaroo}
-otpcl> def multi-test {a} {
+otpcl> cmd multi-test {a} {
   ...> return "It's an 'a'!"
   ...> } {1} {
   ...> return "It's a 1!"
@@ -219,6 +206,15 @@ otpcl> split [uppercase "foo,bar,baz"] ","
 [<<"FOO">>,<<"BAR,BAZ">>]
 ```
 
+Alternately, if you want to avoid namespace clashes:
+
+```
+otpcl> use string
+ok
+otpcl> string split [string uppercase "foo,bar,baz"] ","
+[<<"FOO">>,<<"BAR,BAZ">>]
+```
+
 There's still a lot of work to be done, but it ain't bad for my
 first-ever programming language, I'd say (and with a hand-written
 parser, to boot!).
@@ -227,13 +223,11 @@ parser, to boot!).
 
 * Tokenizer (100%)
 
-* Parser (90%) (probably more stuff that can be added, like pipes; I
-  like pipes, and therefore want to add them)
+* Parser (100%) (there are probably bugs, but it's otherwise complete)
 
-* Interpreter (90%) (pretty sure it's fully functional, but plenty of
-  room for polish)
+* Interpreter (100%) (there are probably bugs, but it's otherwise complete)
 
-* Standard library / built-in functions (10%)
+* Standard library / built-in functions (50%)
 
 * Compiler (0%)
 
@@ -243,8 +237,7 @@ parser, to boot!).
 * Tests (no idea what the test coverage is right now, but hey, at
   least I wrote (some) tests this time!)
 
-* Docs (0%; something something self-documenting code something
-  something)
+* Docs (80%) (making it a point to document new functions as I go)
 
 * Install procedure that's actually sane (or for that matter exists at
   all)
@@ -270,6 +263,12 @@ A word may be any of the following:
 * A variable substitution (either `$unquoted` or `${braced}`)
 * A function call substitution (`[command inside square brackets]`)
 
+There's also the concept of "pipe commands" - that is, if a word starts with a
+pipe, OTPCL will treat it like a newline/semicolon and then treat it as a
+command name.  The core pipe operator (`|`) behaves similarly to the pipe
+operator in Elixir (`|>`); it'll feed the result of the previous command into
+the first argument slot for the next command.
+
 ### Crash Course
 
 ```tcl
@@ -285,7 +284,8 @@ this command will use a $variable ${another variable} and a [function call]
 this command \
     continues on the next line \
     and takes a (list that also \
-                 continues onto another line)
+    continues onto another line)
+C'est | une | pipe  # Take that, Magritte!
 ```
 
 ## What's the license?

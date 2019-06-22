@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module otpcl_eval</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module otpcl_eval</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>OTPCL interpreter/evaluator.
+
+
+<h2><a name="description">Description</a></h2><p>OTPCL interpreter/evaluator.</p>
+
+ <p>OTPCL's interpreter effectively revolves around repeatedly calling 2-arity 
+functions ("commands"), the first argument being the actual list of arguments 
+for that function/command, and the second being the current interpretation 
+state (expressed as a tuple of two maps, one with all command definitions and 
+one with all variable definitions).  Each command-backing function in turn 
+returns a tuple with a return value and an updated state.</p>
+
+ <p>To illustrate: when OTPCL's parser encounters the command invocation <code>foo bar
+ baz</code> and sends the corresponding parse tree to the interpreter, the
+ interpreter in turn calls <code>{Result, NewState} = Fun([bar, baz], State)</code> (where
+ <code>Fun</code> is the value of the <code>foo</code> key in the first element of the <code>State</code> tuple,
+ <code>Result</code> is the return value for that command, and <code>NewState</code> is the updated 
+state).</p>
+
+ <p>This means it's pretty straightforward to define an OTPCL command yourself 
+from within Erlang: simply define a 2-arity function where the first argument 
+is a list and the second argument is a 2-element tuple of maps.  A module that 
+defines OTPCL commands can/should specify which functions in that module are 
+"OTPCL-aware" in this fashion like so:</p>
+
+ <pre> -module(my_otpcl_cmds).
+ -export([foo/2, bar/2, baz/2]).
+ -otpcl_cmds([foo, bar, baz]).  % OTPCL-aware funs in the module
+
+ foo([Thing], State) -&gt;
+     {ok, State}.
+ bar([Thing1, Thing2], State) -&gt;
+     {{Thing1, Thing2}, State}.
+ baz([Name, Val], State) -&gt;
+     otpcl_stdlib:set([Name, Val], State).</pre>
+
+ <p>The interpreter itself is also an OTPCL-aware function in this sense (albeit
+ with a simplification in that it does not <em>require</em> its first argument 
+to be a list; it can take a parse tree directly).  It can thus be invoked from 
+within OTPCL:</p>
+
+ <pre> otpcl&gt; import otpcl_eval
+ {ok,otpcl_eval}
+ otpcl&gt; eval {set foo "howdy~n"}
+ ok
+ otpcl&gt; print $foo
+ howdy
+ ok
+ otpcl&gt; import otpcl_env
+ ok
+ otpcl&gt; eval {
+   ...&gt; set foo "aloha~n"
+   ...&gt; print $foo
+   ...&gt; } [default_state]
+ aloha
+ [ ... pile of interpreter state ... ]
+ otpcl&gt; print $foo
+ howdy
+ ok</pre>
+
+ <p>In fact, most OTPCL features are in turn implemented as OTPCL-aware 
+command-backing functions; that is: OTPCL exposes its own functionality as 
+OTPCL commands wherever it's possible/practical to do so.</p>
+
+ <p>Of course, one may also do this from any OTP application that uses OTPCL, 
+e.g. one written in Erlang:</p>
+
+ <pre> erl&gt; State0 = otpcl_env:default_state().
+ [ ... pile of interpreter state ... ]
+ erl&gt; {ok, State1} = otpcl_stdlib:set([foo, &lt;&lt;"howdy~n"&gt;&gt;], State0).
+ [ ... pile of interpreter state ... ]
+ erl&gt; {ok, State2} = otpcl_eval:eval("print $foo", State1).
+ howdy
+ [ ... pile of interpreter state ... ]</pre>
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-column_no">column_no()</a></h3>
+<p><tt>column_no() = integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-eval_error">eval_error()</a></h3>
+<p><tt>eval_error() = {error, <a href="#type-reason">reason()</a>, <a href="#type-state">state()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-eval_input">eval_input()</a></h3>
+<p><tt>eval_input() = string() | binary() | [<a href="#type-token">token()</a>]</tt></p>
+
+
+<h3 class="typedecl"><a name="type-eval_success">eval_success()</a></h3>
+<p><tt>eval_success() = {ok, <a href="#type-state">state()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-filename">filename()</a></h3>
+<p><tt>filename() = any()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-funs">funs()</a></h3>
+<p><tt>funs() = map()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-level">level()</a></h3>
+<p><tt>level() = atom()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-line_no">line_no()</a></h3>
+<p><tt>line_no() = integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-position">position()</a></h3>
+<p><tt>position() = {<a href="#type-filename">filename()</a>, <a href="#type-line_no">line_no()</a>, <a href="#type-column_no">column_no()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-reason">reason()</a></h3>
+<p><tt>reason() = atom() | {atom(), any()}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-state">state()</a></h3>
+<p><tt>state() = {<a href="#type-funs">funs()</a>, <a href="#type-vars">vars()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-token">token()</a></h3>
+<p><tt>token() = {char(), <a href="#type-position">position()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-tree">tree()</a></h3>
+<p><tt>tree() = {parsed, <a href="#type-level">level()</a>, [<a href="#type-tree">tree()</a>] | [<a href="#type-token">token()</a>]}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-vars">vars()</a></h3>
+<p><tt>vars() = map()</tt></p>
+
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#eval-1">eval/1</a></td><td>Evaluate a string with the default OTPCL starting state.</td></tr>
+<tr><td valign="top"><a href="#eval-2">eval/2</a></td><td>Evaluate a string with a custom starting state.</td></tr>
+<tr><td valign="top"><a href="#eval_file-1">eval_file/1</a></td><td>Evaluate the named file with the default OTPCL starting state.</td></tr>
+<tr><td valign="top"><a href="#eval_file-2">eval_file/2</a></td><td>Evaluate the named file with a custom starting state.</td></tr>
+<tr><td valign="top"><a href="#interpret-1">interpret/1</a></td><td>Interpret the parse nodes with the default OTPCL starting state.</td></tr>
+<tr><td valign="top"><a href="#interpret-2">interpret/2</a></td><td>Interpret the parse nodes with a custom starting state.</td></tr>
+<tr><td valign="top"><a href="#make_atom-1">make_atom/1</a></td><td>Extract an atom from a token string.</td></tr>
+<tr><td valign="top"><a href="#make_atomic-1">make_atomic/1</a></td><td>Extract a float, integer, or atom (in order of preference) from a token
+ string.</td></tr>
+<tr><td valign="top"><a href="#make_binstring-1">make_binstring/1</a></td><td>Extract a binary string from a token string.</td></tr>
+<tr><td valign="top"><a href="#make_charstring-1">make_charstring/1</a></td><td>Extract a character string from a token string.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="eval-1">eval/1</a></h3>
+<div class="spec">
+<p><tt>eval(Src::<a href="#type-eval_input">eval_input()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+</div><p>Evaluate a string with the default OTPCL starting state.</p>
+
+<h3 class="function"><a name="eval-2">eval/2</a></h3>
+<div class="spec">
+<p><tt>eval(Src::<a href="#type-eval_input">eval_input()</a>, State::<a href="#type-state">state()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+</div><p>Evaluate a string with a custom starting state.</p>
+
+<h3 class="function"><a name="eval_file-1">eval_file/1</a></h3>
+<div class="spec">
+<p><tt>eval_file(Filename::<a href="#type-filename">filename()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+</div><p>Evaluate the named file with the default OTPCL starting state.</p>
+
+<h3 class="function"><a name="eval_file-2">eval_file/2</a></h3>
+<div class="spec">
+<p><tt>eval_file(Filename::<a href="#type-filename">filename()</a>, State::<a href="#type-state">state()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+</div><p>Evaluate the named file with a custom starting state.</p>
+
+<h3 class="function"><a name="interpret-1">interpret/1</a></h3>
+<div class="spec">
+<p><tt>interpret(Nodes::<a href="#type-tree">tree()</a> | [<a href="#type-tree">tree()</a>]) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+</div><p>Interpret the parse nodes with the default OTPCL starting state.</p>
+
+<h3 class="function"><a name="interpret-2">interpret/2</a></h3>
+<div class="spec">
+<p><tt>interpret(InvalidNode::<a href="#type-tree">tree()</a> | [<a href="#type-tree">tree()</a>], State::<a href="#type-state">state()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+</div><p>Interpret the parse nodes with a custom starting state.</p>
+
+<h3 class="function"><a name="make_atom-1">make_atom/1</a></h3>
+<div class="spec">
+<p><tt>make_atom(Tokens::[<a href="#type-token">token()</a>]) -&gt; atom()</tt><br></p>
+</div><p>Extract an atom from a token string.  This skips any attempt to check if
+ an atom is a number (which means single-quoted atoms might technically be more
+ efficient than unquoted atoms at the moment...).</p>
+
+<h3 class="function"><a name="make_atomic-1">make_atomic/1</a></h3>
+<div class="spec">
+<p><tt>make_atomic(Tokens::[<a href="#type-token">token()</a>]) -&gt; atom() | integer() | float()</tt><br></p>
+</div><p>Extract a float, integer, or atom (in order of preference) from a token
+ string.</p>
+
+<h3 class="function"><a name="make_binstring-1">make_binstring/1</a></h3>
+<div class="spec">
+<p><tt>make_binstring(Tokens::[<a href="#type-token">token()</a>]) -&gt; binary()</tt><br></p>
+</div><p>Extract a binary string from a token string.</p>
+
+<h3 class="function"><a name="make_charstring-1">make_charstring/1</a></h3>
+<div class="spec">
+<p><tt>make_charstring(Tokens::[<a href="#type-token">token()</a>]) -&gt; string()</tt><br></p>
+</div><p>Extract a character string from a token string.</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>

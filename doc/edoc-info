@@ -1,0 +1,4 @@
+%% encoding: UTF-8
+{application,otpcl}.
+{modules,[otpcl,otpcl_control,otpcl_core,otpcl_env,otpcl_eval,otpcl_init,
+          otpcl_meta,otpcl_parse,otpcl_pipes,otpcl_repl,otpcl_shell]}.

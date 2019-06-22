@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module otpcl_parse</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module otpcl_parse</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>OTPCL's parser.
+
+
+<h2><a name="description">Description</a></h2><p>OTPCL's parser.</p>
+
+ <p>Unlike most Erlang-derived languages, OTPCL's parser is not based on 
+leex/yecc; rather, it's written by hand (as a side note: the author has no 
+idea exactly what sort of parser OTPCL's parser actually is, though "recursive 
+descent" sounds approximately right, given that it's recursive and it 
+descends; someone who actually went to college is welcome to try to make sense 
+of this module and provide a better explanation of what sort of parser it 
+implements).  The parser is (as far as the author can surmise) linear and 
+relatively efficient, albeit only because it "cheats" by punting some things 
+to the interpreter (notably: the parser treats numbers as atoms, so the 
+interpreter is required to reparse atoms if it wants to be able to interpret 
+them as numbers).</p>
+
+ <h3><a name="Syntax">Syntax</a></h3>
+
+ <p>A "free" character is a character that is neither escaped (i.e. immediately 
+preceded by a backslash character, provided that backslash character is itself 
+"free") nor already part of a lower-level construct.</p>
+
+ <p>A program is a list of statements separated by contiguous sequences of free 
+vertical whitespace characters or semicolons.</p>
+
+ <p>A statement is a list of words separated by contiguous sequences of free 
+horizontal whitespace characters (escaped vertical whitespace characters are 
+considered to be horizontal whitespace characters).  Statements may be treated 
+as "commands" in certain contexts (e.g. commands are specifically the 
+top-level children of a program).</p>
+
+ <p>A word is a braced string, double-quoted string, backquoted charlist, 
+single-quoted atom, braced variable, unquoted variable, function call, list, 
+tuple, comment, pipe, or unquoted atom.</p>
+
+ <p>A braced string is a free opening curly brace, followed by zero or more 
+characters and/or braced strings, followed by a free closing curly brace. 
+That is: a braced string can be inside a braced string (and curly braces not 
+intended to begin/end an inner braced string should be escaped with an 
+immediately-preceding backslash).</p>
+
+ <p>A double-quoted string is a free double-quote, followed by zero or more 
+characters, followed by a free double-quote.</p>
+
+ <p>A backquoted charlist is a free backquote, followed by zero or more 
+characters, followed by a free backquote.</p>
+
+ <p>A single-quoted atom is a free single-quote, followed by zero or more 
+characters, followed by a free single-quote.</p>
+
+ <p>A braced variable is a free dollar-sign, followed by a braced string.</p>
+
+ <p>An unquoted variable is a free dollar-sign, followed by a contiguous sequence 
+of characters, terminated by the next free whitespace, semicolon, or (when 
+expected by the parser) closing parenthesis, square bracket, angle bracket, or 
+curly brace.  Unquoted variables may not contain free opening parentheses, 
+square brackets, angle brackets, or curly braces; if encountered, the parser 
+will immediately return an error (this may change in the future).</p>
+
+ <p>A function call is a free opening square bracket, followed by a statement, 
+followed by a free closing square bracket.  It is currently an error for a 
+function call to contain more or less than one statement (this may change in 
+the future).</p>
+
+ <p>A list is a free opening parenthesis, followed by a statement (note: the 
+statement is treated purely as a list of words), followed by a free closing 
+parenthesis.  It is currently an error for a list to contain more than one 
+statement (this will change in the future).</p>
+
+ <p>A tuple is a free opening angle bracket, followed by a statement (note: the 
+statement is treated purely as a list of words), followed by a free closing 
+angle bracket.  It is currently an error for a tuple to contain more than one 
+statement (this will change in the future).</p>
+
+ <p>A comment is a free octothorpe, followed by a contiguous sequence of 
+characters, terminated by the next vertical whitespace character.  A comment 
+terminates the statement in which it is encountered.</p>
+
+ <p>A pipe is a free pipe character, followed optionally by a contiguous sequence 
+of characters, terminated by the next free whitespace.  The pipe itself is 
+parsed as an unquoted atom, which becomes the first word in a new statement.</p>
+
+ <p>An unquoted atom is a contiguous sequence of characters, terminated by the 
+next free whitespace, semicolon, or (when expected by the parser) closing 
+parenthesis, square bracket, angle bracket, or curly brace.  Unquoted atoms 
+may not contain free opening parentheses, square brackets, angle brackets, or 
+curly braces; if encountered, the parser will immediately return an error 
+(this may change in the future).</p>
+
+ <h3><a name="Output">Output</a></h3>
+
+ <p>OTPCL's parser does not emit the same exact structures as Erlang's parser 
+(that is: it does not generate Erlang-compatible parse trees).  This was 
+probably a mistake (and may very well change, notably because it'd presumably 
+make OTPCL compilation easier by just piggybacking on the existing 
+Erlang-oriented infrastructure), but it works well enough for now.</p>
+
+ <h4><a name="Tokens">Tokens</a></h4>
+
+ <p>The lexer makes no attempt to actually classify different types of characters
+ (unlike Erlang's lexer); thus, each "token" is simply <code>{Char, Pos={F,L,C}}</code>,
+ where <code>Char</code> is a character code point and <code>Pos</code> is the position of that
+ character (that is, <code>Char</code> came from column <code>C</code> of line <code>L</code> of file
+ <code>F</code>).</p>
+
+ <h4><a name="Trees">Trees</a></h4>
+
+ The syntax tree the parser emits is a recursive 3-element tuple of the form
+ <code>{parsed, Type, Branches}</code>, where <code>Type</code> is an atom and <code>Branches</code> is a list
+ of either tokens or trees.  By default (i.e. when calling parse/1), the root
+ of the tree will be a <code>program</code>, with <code>command</code> and/or <code>comment</code> branches
+ (<code>pipe</code>s are also parsed at this level, but the parser converts those to
+ <code>command</code>s).
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-column_no">column_no()</a></h3>
+<p><tt>column_no() = integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-filename">filename()</a></h3>
+<p><tt>filename() = any()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-level">level()</a></h3>
+<p><tt>level() = atom()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-line_no">line_no()</a></h3>
+<p><tt>line_no() = integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-parse_error">parse_error()</a></h3>
+<p><tt>parse_error() = {error, <a href="#type-reason">reason()</a>, <a href="#type-level">level()</a>, [<a href="#type-token">token()</a>], [<a href="#type-tree">tree()</a>]}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-parse_success">parse_success()</a></h3>
+<p><tt>parse_success() = {ok, <a href="#type-tree">tree()</a>, [<a href="#type-token">token()</a>]}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-position">position()</a></h3>
+<p><tt>position() = {<a href="#type-filename">filename()</a>, <a href="#type-line_no">line_no()</a>, <a href="#type-column_no">column_no()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-reason">reason()</a></h3>
+<p><tt>reason() = atom() | {atom(), any()}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-str_or_bin">str_or_bin()</a></h3>
+<p><tt>str_or_bin() = string() | binary()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-token">token()</a></h3>
+<p><tt>token() = {char(), <a href="#type-position">position()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-tree">tree()</a></h3>
+<p><tt>tree() = {parsed, <a href="#type-level">level()</a>, [<a href="#type-tree">tree()</a>] | [<a href="#type-token">token()</a>]}</tt></p>
+
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#initpos-0">initpos/0</a></td><td>Column 0 of row 0 of file <code>nofile</code>.</td></tr>
+<tr><td valign="top"><a href="#initpos-1">initpos/1</a></td><td>Column 0 of row 0 of file <code>File</code>.</td></tr>
+<tr><td valign="top"><a href="#parse-1">parse/1</a></td><td>Like parse/2, but defaulting to <code>program</code> as the toplevel parse tree
+ element.</td></tr>
+<tr><td valign="top"><a href="#parse-2">parse/2</a></td><td>Attempts to parse either a string or token list.</td></tr>
+<tr><td valign="top"><a href="#scan-1">scan/1</a></td><td>Converts a string into a list of tokens.</td></tr>
+<tr><td valign="top"><a href="#scan-2">scan/2</a></td><td>Converts a string into a list of tokens, starting at the specified
+ position.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="initpos-0">initpos/0</a></h3>
+<div class="spec">
+<p><tt>initpos() -&gt; <a href="#type-position">position()</a></tt><br></p>
+</div><p>Column 0 of row 0 of file <code>nofile</code>.</p>
+
+<h3 class="function"><a name="initpos-1">initpos/1</a></h3>
+<div class="spec">
+<p><tt>initpos(Filename::any()) -&gt; <a href="#type-position">position()</a></tt><br></p>
+</div><p>Column 0 of row 0 of file <code>File</code>.</p>
+
+<h3 class="function"><a name="parse-1">parse/1</a></h3>
+<div class="spec">
+<p><tt>parse(Input::<a href="#type-str_or_bin">str_or_bin()</a>) -&gt; <a href="#type-parse_success">parse_success()</a> | <a href="#type-parse_error">parse_error()</a></tt><br></p>
+</div><p>Like parse/2, but defaulting to <code>program</code> as the toplevel parse tree
+ element.</p>
+
+<h3 class="function"><a name="parse-2">parse/2</a></h3>
+<div class="spec">
+<p><tt>parse(Lvls::[<a href="#type-level">level()</a>, ...], Input::<a href="#type-str_or_bin">str_or_bin()</a>) -&gt; <a href="#type-parse_success">parse_success()</a> | <a href="#type-parse_error">parse_error()</a></tt><br></p>
+</div><p>Attempts to parse either a string or token list.  Returns either a
+ success response <code>{ok, Tree, Rem}</code> (where <code>Tree</code> is an OTPCL parse tree and
+ <code>Rem</code> is whatever characters were left over</p>
+
+<h3 class="function"><a name="scan-1">scan/1</a></h3>
+<div class="spec">
+<p><tt>scan(Txt::<a href="#type-str_or_bin">str_or_bin()</a>) -&gt; [<a href="#type-token">token()</a>]</tt><br></p>
+</div><p>Converts a string into a list of tokens.</p>
+
+<h3 class="function"><a name="scan-2">scan/2</a></h3>
+<div class="spec">
+<p><tt>scan(Txt::<a href="#type-str_or_bin">str_or_bin()</a>, Pos::<a href="#type-position">position()</a>) -&gt; [<a href="#type-token">token()</a>]</tt><br></p>
+</div><p>Converts a string into a list of tokens, starting at the specified
+ position.</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>
