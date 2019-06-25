@@ -1,1 +1,2 @@
-print "Hello, world!~n"
+use io
+io format "Hello, world!~n"
