@@ -97,37 +97,70 @@
 make_charstring(Tokens) ->
     [C || {C,_} <- Tokens].
 
+make_charstring(Tokens, _State) ->
+    make_charstring(Tokens).
+
 -spec make_binstring([token()]) -> binary().
 % @doc Extract a binary string from a token string.
 make_binstring(Tokens) ->
     list_to_binary(make_charstring(Tokens)).
 
+make_binstring(Tokens, _State) ->
+    make_binstring(Tokens).
+
 -spec make_atomic([token()]) -> atom() | integer() | float().
 % @doc Extract a float, integer, or atom (in order of preference) from a token
 % string.
 make_atomic(Tokens) ->
+    make_atomic(Tokens, otpcl_env:minimal_state()).
+
+make_atomic(Tokens, State) ->
     Text = make_charstring(Tokens),
-    make_atomic(Text, float, string:to_float(Text)).
+    make_atomic(Text, float, string:to_float(Text), State).
 
 % Floats
-make_atomic(_, float, {Float, []}) ->
+make_atomic(_, float, {Float, []}, _State) ->
     Float;
-make_atomic(Text, float, _) ->
-    make_atomic(Text, integer, string:to_integer(Text));
+make_atomic(Text, float, _, State) ->
+    make_atomic(Text, integer, string:to_integer(Text), State);
 
 % Integers (if this conversion attempt fails, then we just treat it as
 % an ordinary atom)
-make_atomic(_, integer, {Int, []}) ->
+make_atomic(_, integer, {Int, []}, _State) ->
     Int;
-make_atomic(Text, integer, _) ->
-    list_to_atom(Text).
+make_atomic(Text, integer, _, State) ->
+    case interpreter_is_stringy(State) of
+        true ->
+            list_to_binary(Text);
+        false ->
+            list_to_atom(Text)
+    end.
 
 -spec make_atom([token()]) -> atom().
 % @doc Extract an atom from a token string.  This skips any attempt to check if
 % an atom is a number (which means single-quoted atoms might technically be more
 % efficient than unquoted atoms at the moment...).
 make_atom(Tokens) ->
-    list_to_atom(make_charstring(Tokens)).
+    make_atom(Tokens, otpcl_env:minimal_state()).
+
+make_atom(Tokens, State) ->
+    Text = make_binstring(Tokens),
+    case interpreter_is_stringy(State) of
+        true ->
+            Text;
+        false ->
+            binary_to_atom(Text)
+    end.
+
+% @doc Determines if the interpreter is "stringy" (i.e. it emits
+% binstrings instead of atoms).
+interpreter_is_stringy(State) ->
+    case otpcl_meta:get([<<"STRINGY_INTERPRETER">>], State) of
+        {error, _, _} ->
+            false;
+        _ ->
+            true
+    end.
 
 
 % Here's the meat of the interpreter.
@@ -139,10 +172,10 @@ interpret(Nodes) ->
 
 -spec interpret(tree() | [tree()], state()) -> eval_success() | eval_error().
 % @doc Interpret the parse nodes with a custom starting state.
-interpret({parsed, unquoted, Tokens}, _State) ->
-    make_atomic(Tokens);
-interpret({parsed, single_quoted, Tokens}, _State) ->
-    make_atom(Tokens);
+interpret({parsed, unquoted, Tokens}, State) ->
+    make_atomic(Tokens, State);
+interpret({parsed, single_quoted, Tokens}, State) ->
+    make_atom(Tokens, State);
 interpret({parsed, double_quoted, Tokens}, _State) ->
     make_binstring(Tokens); % TODO: allow var/funcall substitution (maybe?)
 interpret({parsed, braced, Tokens}, _State) ->
@@ -154,7 +187,7 @@ interpret({parsed, var_unquoted, Tokens}, State) ->
 interpret({parsed, var_braced, Tokens}, State) ->
     interpret({parsed, var, Tokens}, State);
 interpret({parsed, var, Tokens}, State) ->
-    {Val, State} = otpcl_meta:get([make_atom(Tokens)], State),
+    {Val, State} = otpcl_meta:get([make_binstring(Tokens)], State),
     Val;
 % FIXME: any state changes here (new/modified functions and variables,
 % for example) won't actually persist beyond a list/tuple/funcall
@@ -169,18 +202,18 @@ interpret({parsed, funcall, Words}, State) ->
     {Res, _} = otpcl_meta:apply(Cmd, State),
     Res;
 interpret({parsed, command, []}, State) ->
-    otpcl_meta:get(['RETVAL'], State);
+    otpcl_meta:get([<<"RETVAL">>], State);
 interpret({parsed, command, Words}, State) ->
     Cmd = [interpret(I, State) || I <- Words],
     otpcl_meta:apply(Cmd, State);
 interpret({parsed, comment, _}, State) ->
-    otpcl_meta:get(['RETVAL'], State);
+    otpcl_meta:get([<<"RETVAL">>], State);
 interpret({parsed, program, [Cmd|Rest]}, State) ->
     {RetVal, NewState} = interpret(Cmd, State),
-    {ok, RetState} = otpcl_meta:set(['RETVAL', RetVal], NewState),
+    {ok, RetState} = otpcl_meta:set([<<"RETVAL">>, RetVal], NewState),
     interpret({parsed, program, Rest}, RetState);
 interpret({parsed, program, []}, State) ->
-    otpcl_meta:get(['RETVAL'], State);
+    otpcl_meta:get([<<"RETVAL">>], State);
 interpret({parsed, Type, Data}, State) ->
     {error, {unknown_node_type, Type, Data}, State};
 interpret([{parsed, Type, Data}], State) ->

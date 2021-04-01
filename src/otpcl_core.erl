@@ -53,4 +53,4 @@ return(Args, State) ->
 % a message to the process identified via `$pid'.
 '|'([Cmd|Args], State) ->
     {RetVal, State} = otpcl_meta:get(['RETVAL'], State),
-    otpcl_meta:apply([Cmd, [RetVal|Args]], State).
+    otpcl_meta:apply([Cmd, RetVal|Args], State).
