@@ -1,6 +1,6 @@
 {application, otpcl,
  [{description, "Open Telecom Platform Command Language"},
-  {vsn, "0.2.0"},
+  {vsn, "0.3.0"},
   {modules, [otpcl,
              otpcl_control,
              otpcl_core,
