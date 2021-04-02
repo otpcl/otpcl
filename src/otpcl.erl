@@ -103,4 +103,4 @@ cmd(Name, State) ->
 -spec cmd(atom(), function(), state()) -> {'ok', state()}.
 % @doc Set the function backing a command in an OTPCL interpreter state.
 cmd(Name, Fun, State) ->
-    otpcl_stdmeta:cmd([Name, Fun], State).
+    otpcl_meta:cmd([Name, Fun], State).
