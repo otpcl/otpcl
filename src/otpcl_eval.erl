@@ -1,24 +1,26 @@
 % @doc OTPCL interpreter/evaluator.
 %
-% OTPCL's interpreter effectively revolves around repeatedly calling 2-arity
-% functions ("commands"), the first argument being the actual list of arguments
-% for that function/command, and the second being the current interpretation
-% state (expressed as a tuple of two maps, one with all command definitions and
-% one with all variable definitions).  Each command-backing function in turn
-% returns a tuple with a return value and an updated state.
+% OTPCL's interpreter effectively revolves around repeatedly calling
+% 2-arity functions ("commands"), the first argument being the actual
+% list of arguments for that function/command, and the second being
+% the current interpretation state (expressed as a tuple of two maps,
+% one with all command definitions and one with all variable
+% definitions).  Each command-backing function in turn returns a tuple
+% with a return value and an updated state.
 %
-% To illustrate: when OTPCL's parser encounters the command invocation `foo bar
-% baz' and sends the corresponding parse tree to the interpreter, the
-% interpreter in turn calls `{Result, NewState} = Fun([bar, baz], State)' (where
-% `Fun' is the value of the `foo' key in the first element of the `State' tuple,
-% `Result' is the return value for that command, and `NewState' is the updated
-% state).
+% To illustrate: when OTPCL's parser encounters the command invocation
+% `foo bar baz' and sends the corresponding parse tree to the
+% interpreter, the interpreter in turn calls `{Result, NewState} =
+% Fun([bar, baz], State)' (where `Fun' is the value of the `foo' key
+% in the first element of the `State' tuple, `Result' is the return
+% value for that command, and `NewState' is the updated state).
 %
-% This means it's pretty straightforward to define an OTPCL command yourself
-% from within Erlang: simply define a 2-arity function where the first argument
-% is a list and the second argument is a 2-element tuple of maps.  A module that
-% defines OTPCL commands can/should specify which functions in that module are
-% "OTPCL-aware" in this fashion like so:
+% This means it's pretty straightforward to define an OTPCL command
+% yourself from within Erlang: simply define a 2-arity function where
+% the first argument is a list and the second argument is a 2-element
+% tuple of maps.  A module that defines OTPCL commands can/should
+% specify which functions in that module are "OTPCL-aware" in this
+% fashion like so:
 %
 % ```
 % -module(my_otpcl_cmds).
@@ -33,10 +35,10 @@
 %     otpcl_stdlib:set([Name, Val], State).
 % '''
 %
-% The interpreter itself is also an OTPCL-aware function in this sense (albeit
-% with a simplification in that it does not <em>require</em> its first argument
-% to be a list; it can take a parse tree directly).  It can thus be invoked from
-% within OTPCL:
+% The interpreter itself is also an OTPCL-aware function in this sense
+% (albeit with a simplification in that it does not <em>require</em>
+% its first argument to be a list; it can take a parse tree directly).
+% It can thus be invoked from within OTPCL:
 %
 % ```
 % otpcl> import otpcl_eval
@@ -60,11 +62,12 @@
 % '''
 %
 % In fact, most OTPCL features are in turn implemented as OTPCL-aware
-% command-backing functions; that is: OTPCL exposes its own functionality as
-% OTPCL commands wherever it's possible/practical to do so.
+% command-backing functions; that is: OTPCL exposes its own
+% functionality as OTPCL commands wherever it's possible/practical to
+% do so.
 %
-% Of course, one may also do this from any OTP application that uses OTPCL,
-% e.g. one written in Erlang:
+% Of course, one may also do this from any OTP application that uses
+% OTPCL, e.g. one written in Erlang:
 %
 % ```
 % erl> State0 = otpcl_env:default_state().
@@ -109,8 +112,8 @@ make_binstring(Tokens, _State) ->
     make_binstring(Tokens).
 
 -spec make_atomic([token()]) -> atom() | integer() | float().
-% @doc Extract a float, integer, or atom (in order of preference) from a token
-% string.
+% @doc Extract a float, integer, or atom (in order of preference) from
+% a token string.
 make_atomic(Tokens) ->
     make_atomic(Tokens, otpcl_env:minimal_state()).
 
@@ -137,9 +140,9 @@ make_atomic(Text, integer, _, State) ->
     end.
 
 -spec make_atom([token()]) -> atom().
-% @doc Extract an atom from a token string.  This skips any attempt to check if
-% an atom is a number (which means single-quoted atoms might technically be more
-% efficient than unquoted atoms at the moment...).
+% @doc Extract an atom from a token string.  This skips any attempt to
+% check if an atom is a number (which means single-quoted atoms might
+% technically be more efficient than unquoted atoms at the moment...).
 make_atom(Tokens) ->
     make_atom(Tokens, otpcl_env:minimal_state()).
 
