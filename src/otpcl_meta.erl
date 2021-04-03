@@ -12,9 +12,9 @@
 
 -include("otpcl.hrl").
 
--export([import/2, use/2, subcmd/2, cmd/2, apply/2, get/2, set/2]).
+-export([import/2, use/2, subcmd/2, cmd/2, apply/2, get/2, set/2, unset/2]).
 
--otpcl_cmds([import, use, subcmd, cmd, apply, get, set]).
+-otpcl_cmds([import, use, subcmd, cmd, apply, get, set, unset]).
 
 make_binstring(I) when is_atom(I) ->
     atom_to_binary(I);
@@ -54,6 +54,11 @@ get([N], {Funs, Vars}) ->
 set([N, Val], {Funs, Vars}) ->
     Name = make_binstring(N),
     {ok, {Funs, maps:put(Name, Val, Vars)}}.
+
+% @doc Unset the named variable, as if it never existed.
+unset([N], {Funs, Vars}) ->
+    Name = make_binstring(N),
+    {ok, {Funs, maps:remove(Name, Vars)}}.
 
 % @doc Get (and optionally set) the named variable.
 %
