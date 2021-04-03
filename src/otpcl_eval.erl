@@ -136,7 +136,7 @@ make_atomic(Text, float, _, State) ->
 % an ordinary atom)
 make_atomic(_, integer, {Int, []}, _State) ->
     Int;
-make_atomic(Text, integer, _, State) ->
+make_atomic(Text, integer, _, _State) ->
     list_to_atom(Text).
 
 -spec make_atom([token()]) -> atom().
