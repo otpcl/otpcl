@@ -49,3 +49,18 @@ stringy_test() ->
     ?assertEqual(V4N, true),
     ?assertEqual(V4S, false),
     ok.
+
+stringy_switch_test() ->
+    Script = string:join(["import erlang",
+                          "set pre_stringy [is_atom foo]",
+                          "set STRINGY_INTERPRETER ok",
+                          "set stringy [is_atom foo]",
+                          "unset STRINGY_INTERPRETER",
+                          "set post_stringy [is_atom foo]",
+                          "return <$pre_stringy $stringy $post_stringy>"],
+                         "\n"),
+    {{PreStringy, Stringy, PostStringy}, S0} = otpcl:eval(Script),
+    ?assertEqual(PreStringy, true),
+    ?assertEqual(Stringy, false),
+    ?assertEqual(PostStringy, true),
+    ok.
