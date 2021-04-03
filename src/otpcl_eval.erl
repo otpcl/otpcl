@@ -119,7 +119,12 @@ make_atomic(Tokens) ->
 
 make_atomic(Tokens, State) ->
     Text = make_charstring(Tokens),
-    make_atomic(Text, float, string:to_float(Text), State).
+    case interpreter_is_stringy(State) of
+        true ->
+            list_to_binary(Text);
+        false ->
+            make_atomic(Text, float, string:to_float(Text), State)
+    end.
 
 % Floats
 make_atomic(_, float, {Float, []}, _State) ->
@@ -132,12 +137,7 @@ make_atomic(Text, float, _, State) ->
 make_atomic(_, integer, {Int, []}, _State) ->
     Int;
 make_atomic(Text, integer, _, State) ->
-    case interpreter_is_stringy(State) of
-        true ->
-            list_to_binary(Text);
-        false ->
-            list_to_atom(Text)
-    end.
+    list_to_atom(Text).
 
 -spec make_atom([token()]) -> atom().
 % @doc Extract an atom from a token string.  This skips any attempt to

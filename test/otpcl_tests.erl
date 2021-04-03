@@ -36,4 +36,8 @@ stringy_test() ->
     ?assertEqual(V1, false),
     {V2, _S} = otpcl:eval("return 'foo' | is_atom", S1),
     ?assertEqual(V2, false),
+    {V3, _S} = otpcl:eval("return 123 | is_integer", S1),
+    ?assertEqual(V3, false),
+    {V4, _S} = otpcl:eval("return 1.23 | is_float", S1),
+    ?assertEqual(V4, false),
     ok.
