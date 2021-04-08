@@ -34,6 +34,13 @@ make_atom(I) when is_binary(I) ->
 make_atom(I) when is_atom(I) ->
     I.
 
+make_existing_atom(I) when is_list(I) ->
+    list_to_existing_atom(I);
+make_existing_atom(I) when is_binary(I) ->
+    binary_to_existing_atom(I);
+make_existing_atom(I) when is_atom(I) ->
+    I.
+
 
 % @doc Get the value of the named variable.
 %
@@ -124,29 +131,29 @@ var([N, Val], {Funs, Vars}) ->
 % (<strong>Warning for "stringy" interpreter users:</strong> this
 % command dynamically creates atoms!)
 import([M], State) ->
-    Module = make_atom(M),
+    Module = make_existing_atom(M),
     import([Module, otpcl_cmds(Module:module_info(attributes))], State);
 import([M, {otpcl_cmds, Names}], State) ->
-    Module = make_atom(M),
+    Module = make_existing_atom(M),
     import([otpcl, Module, Names], State);
 import([M, no_otpcl_cmds], State) ->
-    Module = make_atom(M),
+    Module = make_existing_atom(M),
     Names = [Name || {Name, _} <- Module:module_info(exports)],
     import([erlang, Module, Names], State);
 import([Type, M, [N|Names]], State) ->
-    Module = make_atom(M), Name = make_atom(N),
+    Module = make_existing_atom(M), Name = make_existing_atom(N),
     {ok, NewState} = import([Type, Module, Name], State),
     import([Type, Module, Names], NewState);
 import([otpcl, _Module, []], State) ->
     {ok, State};
 import([M, N], State) ->
-    Module = make_atom(M), Name = make_atom(N),
+    Module = make_existing_atom(M), Name = make_existing_atom(N),
     import([erlang, Module, Name], State);
 import([otpcl, M, N], State) ->
-    Module = make_atom(M), Name = make_atom(N),
+    Module = make_existing_atom(M), Name = make_existing_atom(N),
     cmd([Name, fun Module:Name/2], State);
 import([erlang, M, N], State) ->
-    Module = make_atom(M), Name = make_atom(N),
+    Module = make_existing_atom(M), Name = make_existing_atom(N),
     WrappedFun = fun (Args, S) -> {erlang:apply(Module, Name, Args), S} end,
     cmd([Name, WrappedFun], State).
 
@@ -173,24 +180,28 @@ otpcl_cmds([]) ->
 % (<strong>Warning for "stringy" interpreter users:</strong> this
 % command dynamically creates atoms!)
 use([M], State) ->
-    Module = make_atom(M),
+    Module = make_existing_atom(M),
     use([Module, as, Module], State);
 use([M, as, A], State) ->
-    Module = make_atom(M), Alias = make_atom(A),
+    Module = make_existing_atom(M), Alias = make_existing_atom(A),
     use([Module, as, Alias, otpcl_cmds(Module:module_info(attributes))], State);
 use([M, as, A, {otpcl_cmds, Names}], State) ->
-    Module = make_atom(M), Alias = make_atom(A),
+    Module = make_existing_atom(M), Alias = make_existing_atom(A),
     use([otpcl, Module, as, Alias, Names], State);
 use([M, as, A, no_otpcl_cmds], State) ->
-    Module = make_atom(M), Alias = make_atom(A),
+    Module = make_existing_atom(M), Alias = make_existing_atom(A),
     Names = [Name || {Name, _} <- Module:module_info(exports)],
     use([erlang, Module, as, Alias, Names, []], State);
 use([otpcl, M, as, A, [N|Names], Acc], State) ->
-    Module = make_atom(M), Alias = make_atom(A), Name = make_atom(N),
+    Module = make_existing_atom(M),
+    Alias = make_existing_atom(A),
+    Name = make_existing_atom(N),
     use([otpcl, Module, as, Alias, Names,
          [Name, fun Module:Name/2|Acc]], State);
 use([erlang, M, as, A, [N|Names], Acc], State) ->
-    Module = make_atom(M), Alias = make_atom(A), Name = make_atom(N),
+    Module = make_existing_atom(M),
+    Alias = make_existing_atom(A),
+    Name = make_existing_atom(N),
     WrappedFun = fun (Args, S) -> {erlang:apply(Module, Name, Args), S} end,
     use([erlang, Module, as, Alias, Names, [Name, WrappedFun|Acc]], State);
 use([_, _Module, as, A, [], Acc], State) ->
