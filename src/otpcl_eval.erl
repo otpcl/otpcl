@@ -86,12 +86,20 @@
          eval/2, 'CMD_eval_file'/2, eval_file/1, eval_file/2, make_charstring/1,
          make_binstring/1, make_atomic/1, make_atom/1]).
 
-'CMD_interpret'(Args, State) ->
-    interpret(Args, State).
-'CMD_eval'(Args, State) ->
-    eval(Args, State).
-'CMD_eval_file'(Args, State) ->
-    eval_file(Args, State).
+'CMD_interpret'([AST], State) ->
+    interpret(AST, State);
+'CMD_interpret'([AST, InnerState], OuterState) ->
+    {interpret(AST, InnerState), OuterState}.
+
+'CMD_eval'([Text], State) ->
+    eval(Text, State);
+'CMD_eval'([Text, InnerState], OuterState) ->
+    {eval(Text, InnerState), OuterState}.
+
+'CMD_eval_file'([Path], State) ->
+    eval_file(Path, State);
+'CMD_eval_file'([Path, InnerState], OuterState) ->
+    {eval_file(Path, InnerState), OuterState}.
 
 -ifdef(DEBUG).
 -define(DEBUG_PRINT(Msg, Args), io:format(Msg, Args)).
@@ -225,8 +233,6 @@ interpret({parsed, program, []}, State) ->
     otpcl_meta:get([<<"RETVAL">>], State);
 interpret({parsed, Type, Data}, State) ->
     {error, {unknown_node_type, Type, Data}, State};
-interpret([{parsed, Type, Data}], State) ->
-    interpret({parsed, Type, Data}, State);
 interpret(InvalidNode, State) ->
     {error, {not_an_otpcl_parse_node, InvalidNode}, State}.
 
@@ -240,15 +246,15 @@ eval(Src) ->
 
 -spec eval(eval_input(), state()) -> eval_success() | eval_error().
 % @doc Evaluate a string with a custom starting state.
-eval(Src = [Char|_], State) when is_integer(Char) ->
-    eval([Src], State);
-eval([Src, SubState], State) ->
-    {eval([Src], SubState), State};
-eval([Src], State) ->
-    {ok, Tree, []} = otpcl_parse:parse(Src),
-    interpret(Tree, State);
+%% eval(Src = [Char|_], State) when is_integer(Char) ->
+%%     eval([Src], State);
+%% eval([Src, SubState], State) ->
+%%     {eval([Src], SubState), State};
 eval(Src, State) ->
-    eval([Src], State).
+    {ok, Tree, []} = otpcl_parse:parse(Src),
+    interpret(Tree, State).
+%% eval(Src, State) ->
+%%     eval([Src], State).
 
 -spec eval_file(filename()) -> eval_success() | eval_error().
 % @doc Evaluate the named file with the default OTPCL starting state.

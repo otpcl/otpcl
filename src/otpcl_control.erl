@@ -64,7 +64,7 @@ for([Name, in, Args, Do], State) ->
     for([Name, <<"in">>, Args, Do], State);
 for([Name, <<"in">>, [Each|Rest], Do], State) ->
     {ok, NewState} = otpcl_meta:set([Name, Each], State),
-    {_, NewerState} = otpcl_eval:eval([Do], NewState),
+    {_, NewerState} = otpcl_eval:eval(Do, NewState),
     for([Name, <<"in">>, Rest, Do], NewerState);
 for([_, <<"in">>, [], _], State) ->
     {RetVal, State} = otpcl_meta:get([<<"RETVAL">>], State),
@@ -78,10 +78,10 @@ for([_, <<"in">>, [], _], State) ->
 % `break' does); `while' will pick this up, unset `$BREAK', and
 % immediately exit the loop.
 while([Pred, Do], State) ->
-    {PredVal, NewState} = otpcl_eval:eval([Pred], State),
+    {PredVal, NewState} = otpcl_eval:eval(Pred, State),
     case truthy(PredVal) of
         true ->
-            {_, NewerState} = otpcl_eval:eval([Do], NewState),
+            {_, NewerState} = otpcl_eval:eval(Do, NewState),
             case should_break(NewerState) of
                 true ->
                     {_, FinalState} = otpcl_meta:unset([<<"BREAK">>],
