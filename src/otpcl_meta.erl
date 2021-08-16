@@ -12,9 +12,30 @@
 
 -include("otpcl.hrl").
 
--export([import/2, use/2, subcmd/2, cmd/2, apply/2, get/2, set/2, unset/2]).
+-export(['CMD_import'/2, import/2, 'CMD_use'/2, use/2, 'CMD_subcmd'/2, subcmd/2,
+         'CMD_cmd'/2, cmd/2, 'CMD_apply'/2, apply/2, 'CMD_get'/2, get/2,
+         'CMD_set'/2, set/2, 'CMD_unset'/2, unset/2, 'CMD_var'/2, var/2]).
 
--otpcl_cmds([import, use, subcmd, cmd, apply, get, set, unset]).
+% Wrappers
+
+import(Args, State) ->
+    'CMD_import'(Args, State).
+use(Args, State) ->
+    'CMD_use'(Args, State).
+subcmd(Args, State) ->
+    'CMD_subcmd'(Args, State).
+cmd(Args, State) ->
+    'CMD_cmd'(Args, State).
+apply(Args, State) ->
+    'CMD_apply'(Args, State).
+get(Args, State) ->
+    'CMD_get'(Args, State).
+set(Args, State) ->
+    'CMD_set'(Args, State).
+unset(Args, State) ->
+    'CMD_unset'(Args, State).
+var(Args, State) ->
+    'CMD_var'(Args, State).
 
 make_binstring(I) when is_atom(I) ->
     atom_to_binary(I);
@@ -47,7 +68,7 @@ make_existing_atom(I) when is_atom(I) ->
 % Mostly useless from within OTPCL, but quite handy when manipulating
 % OTPCL states from within Erlang or some other situation external to
 % OTPCL.
-get([N], {Funs, Vars}) ->
+'CMD_get'([N], {Funs, Vars}) ->
     Name = make_binstring(N),
     case maps:find(Name, Vars) of
         {ok, Val} ->
@@ -58,12 +79,12 @@ get([N], {Funs, Vars}) ->
 
 
 % @doc Set the value of the named variable.
-set([N, Val], {Funs, Vars}) ->
+'CMD_set'([N, Val], {Funs, Vars}) ->
     Name = make_binstring(N),
     {ok, {Funs, maps:put(Name, Val, Vars)}}.
 
 % @doc Unset the named variable, as if it never existed.
-unset([N], {Funs, Vars}) ->
+'CMD_unset'([N], {Funs, Vars}) ->
     Name = make_binstring(N),
     {ok, {Funs, maps:remove(Name, Vars)}}.
 
@@ -71,7 +92,7 @@ unset([N], {Funs, Vars}) ->
 %
 % If setting a new value for an existing variable, this will return
 % the old value (else, it'll return `ok').
-var([N], {Funs, Vars})->
+'CMD_var'([N], {Funs, Vars})->
     Name = make_binstring(N),
     case maps:find(Name, Vars) of
         {ok, Val} ->
@@ -79,7 +100,7 @@ var([N], {Funs, Vars})->
         _ ->
             {error, {no_such_var, Name}, {Funs, Vars}}
     end;
-var([N, Val], {Funs, Vars}) ->
+'CMD_var'([N, Val], {Funs, Vars}) ->
     Name = make_binstring(N),
     Search = maps:find(Name, Vars),
     NewVars = maps:put(Name, Val, Vars),
@@ -93,35 +114,19 @@ var([N, Val], {Funs, Vars}) ->
 -spec import([atom(), ...], state()) -> {'ok', state()}.
 % @doc Imports commands from an Erlang module.
 %
-% Will import either all commands (if only a module name is provided)
-% or specifically-named commands (if any are passed after the module
-% name).  If the module includes an `-otpcl_cmds' attribute with a
-% list of command names (corresponding to 2-arity functions in that
-% module), OTPCL will import these functions (and only these
-% functions) as OTPCL commands outright (that is: it will assume that
-% the module has such-named 2-arity functions exported/defined, and
-% that those functions each accept a parameter list + state and return
-% a tuple with a return value + state); else, OTPCL will "wrap" each
-% imported function in a command that simply calls that function with
-% the provided arguments and returns the result (without touching the
-% input state).
-%
-% Either mode of operation can be forced by passing either `otpcl' or
-% `erlang' (respectively) before the module name.  Note that `otpcl'
-% is the default for importing a whole module, while `erlang' is the
-% default for importing specific functions.  Also note that OTPCL
-% doesn't really have a concept of "arity" (at least in the "`foo/1'
-% and `foo/2' are different functions" sense), so if your module `foo'
-% defines `bar/1' and `bar/2', `import foo bar' will create a `bar'
-% command that wraps both.
+% Will import either all commands (if only a module name is provided) or
+% specifically-named commands (if any are passed after the module name).  If an
+% exported function's name starts with `CMD_', `import' will treat that function
+% as a proper state-altering OTPCL command named after whatever follows that
+% prefix (e.g. `CMD_foo' becomes `foo').  Otherwise, `import' will treat that
+% function as an ordinary Erlang function, creating an OTPCL command with the
+% same name.
 %
 % To summarize:
 %
 % ```
 % import foo                # imports everything in module foo
-% import foo bar baz        # imports bar and baz from foo
-% import otpcl foo bar baz  # forcibly treats bar and baz as OTPCL commands
-% import erlang foo bar baz # forcibly treats bar and baz as Erlang functions
+% import foo bar baz        # imports only bar and baz from foo
 % '''
 %
 % It's usually preferable to choose `use' over `import', since `use'
@@ -130,39 +135,23 @@ var([N, Val], {Funs, Vars}) ->
 %
 % (<strong>Warning for "stringy" interpreter users:</strong> this
 % command dynamically creates atoms!)
-import([M], State) ->
+'CMD_import'([M], State) ->
     Module = make_existing_atom(M),
-    import([Module, otpcl_cmds(Module:module_info(attributes))], State);
-import([M, {otpcl_cmds, Names}], State) ->
+    Exported = exported_cmds(Module),
+    Deduped = deduped_cmds(Exported),
+    do_import(Deduped, State);
+'CMD_import'([M|Names], State) ->
     Module = make_existing_atom(M),
-    import([otpcl, Module, Names], State);
-import([M, no_otpcl_cmds], State) ->
-    Module = make_existing_atom(M),
-    Names = [Name || {Name, _} <- Module:module_info(exports)],
-    import([erlang, Module, Names], State);
-import([Type, M, [N|Names]], State) ->
-    Module = make_existing_atom(M), Name = make_existing_atom(N),
-    {ok, NewState} = import([Type, Module, Name], State),
-    import([Type, Module, Names], NewState);
-import([otpcl, _Module, []], State) ->
-    {ok, State};
-import([M, N], State) ->
-    Module = make_existing_atom(M), Name = make_existing_atom(N),
-    import([erlang, Module, Name], State);
-import([otpcl, M, N], State) ->
-    Module = make_existing_atom(M), Name = make_existing_atom(N),
-    cmd([Name, fun Module:Name/2], State);
-import([erlang, M, N], State) ->
-    Module = make_existing_atom(M), Name = make_existing_atom(N),
-    WrappedFun = fun (Args, S) -> {erlang:apply(Module, Name, Args), S} end,
-    cmd([Name, WrappedFun], State).
+    Exported = exported_cmds(Module),
+    Deduped = deduped_cmds(Exported),
+    Filtered = filtered_cmds(Deduped, Names),
+    do_import(Filtered, State).
 
-otpcl_cmds([{otpcl_cmds, Names}|_]) ->
-    {otpcl_cmds, Names};
-otpcl_cmds([{_,_}|Rem]) ->
-    otpcl_cmds(Rem);
-otpcl_cmds([]) ->
-    no_otpcl_cmds.
+do_import([{Name, Fun}|Cmds], State) ->
+    {_, NewState} = 'CMD_cmd'([Name, Fun], State),
+    do_import(Cmds, NewState);
+do_import([], State) ->
+    {ok, State}.
 
 % @doc Creates a command representing a module.
 %
@@ -173,41 +162,72 @@ otpcl_cmds([]) ->
 % ```
 % use foo         # create command foo with foo's funs as subcommands
 % use foo as bar  # create command bar with foo's funs as subcommands
-% use otpcl foo   # forcibly treat all subcommand funs as OTPCL-aware
-% use erlang foo  # forcibly treat all subcommand funs as non-OTPCL-aware
 % '''
 %
 % (<strong>Warning for "stringy" interpreter users:</strong> this
 % command dynamically creates atoms!)
-use([M], State) ->
-    Module = make_existing_atom(M),
-    use([Module, as, Module], State);
-use([M, as, A], State) ->
+'CMD_use'([M], State) ->
+    do_use(M, M, State);
+'CMD_use'([M, as, A], State) ->
+    do_use(M, A, State);
+'CMD_use'([M, <<"as">>, A], State) ->
+    do_use(M, A, State).
+
+do_use(M, A, State) ->
     Module = make_existing_atom(M), Alias = make_existing_atom(A),
-    use([Module, as, Alias, otpcl_cmds(Module:module_info(attributes))], State);
-use([M, as, A, {otpcl_cmds, Names}], State) ->
-    Module = make_existing_atom(M), Alias = make_existing_atom(A),
-    use([otpcl, Module, as, Alias, Names], State);
-use([M, as, A, no_otpcl_cmds], State) ->
-    Module = make_existing_atom(M), Alias = make_existing_atom(A),
-    Names = [Name || {Name, _} <- Module:module_info(exports)],
-    use([erlang, Module, as, Alias, Names, []], State);
-use([otpcl, M, as, A, [N|Names], Acc], State) ->
-    Module = make_existing_atom(M),
-    Alias = make_existing_atom(A),
-    Name = make_existing_atom(N),
-    use([otpcl, Module, as, Alias, Names,
-         [Name, fun Module:Name/2|Acc]], State);
-use([erlang, M, as, A, [N|Names], Acc], State) ->
-    Module = make_existing_atom(M),
-    Alias = make_existing_atom(A),
-    Name = make_existing_atom(N),
-    WrappedFun = fun (Args, S) -> {erlang:apply(Module, Name, Args), S} end,
-    use([erlang, Module, as, Alias, Names, [Name, WrappedFun|Acc]], State);
-use([_, _Module, as, A, [], Acc], State) ->
-    Alias = A,
-    {Dispatcher, NewState} = subcmd(Acc, State),
-    cmd([Alias, Dispatcher], NewState).
+    Exported = exported_cmds(Module),
+    Deduped = deduped_cmds(Exported),
+    Prepped = prepped_cmds(Deduped, []),
+    {Dispatcher, NewState} = 'CMD_subcmd'(Prepped, State),
+    'CMD_cmd'([Alias, Dispatcher], NewState).
+
+exported_cmds(Module) ->
+    Names = [atom_to_list(Name) || {Name, _} <- Module:module_info(exports)],
+    exported_cmds(Module, Names, []).
+
+exported_cmds(Module, [Name|Names], Cmds) ->
+    Cmd = fun2cmd(Module, Name),
+    exported_cmds(Module, Names, [Cmd|Cmds]);
+exported_cmds(_, [], Cmds) ->
+    Cmds.
+
+fun2cmd(Module, "CMD_" ++ CmdName = Name) ->
+    AName = list_to_atom(Name),
+    WrappedFun = fun Module:AName/2,
+    {otpcl, CmdName, WrappedFun};
+fun2cmd(Module, Name) ->
+    AName = list_to_atom(Name),
+    WrappedFun = fun (Args, State) ->
+                         {erlang:apply(Module, AName, Args), State}
+                 end,
+    {erlang, Name, WrappedFun}.
+
+deduped_cmds(Cmds) ->
+    % FIXME: There's probably a much better way to do this.
+    Partitioner = fun ({Kind,_,_}) ->
+                          Kind == otpcl
+                  end,
+    {OtpclCmds, ErlangCmds} = lists:partition(Partitioner, Cmds),
+    OtpclNames = [Name || {_, Name, _} <- OtpclCmds],
+    % If there's an OTPCL command and an Erlang function with the same command
+    % name, the former takes precedence - e.g. if the module exports 'CMD_foo/2'
+    % and 'foo/1', then 'CMD_foo/2' will become the 'foo' command provided to
+    % the output state from import/use.
+    Keeper = fun ({erlang, Name, _}) ->
+                      not lists:member(Name, OtpclNames)
+             end,
+    KeptErlangCmds = lists:filter(Keeper, ErlangCmds),
+    DedupedCmds = OtpclCmds ++ KeptErlangCmds,
+    [{Name, Fun} || {_, Name, Fun} <- DedupedCmds].
+
+filtered_cmds(Cmds, Names) ->
+    Taker = fun ({Name, _}) -> lists:member(Name, Names) end,
+    lists:takewhile(Taker, Cmds).
+
+prepped_cmds([{Name, Fun}|Cmds], Prepped) ->
+    prepped_cmds(Cmds, [Name, Fun|Prepped]);
+prepped_cmds([], Prepped) ->
+    Prepped.
 
 % @doc Returns a subcommand dispatcher.  The resulting function (when
 % set as a command) will treat the first argument as a subcommand
@@ -223,13 +243,13 @@ use([_, _Module, as, A, [], Acc], State) ->
 % this very module).  There's certainly nothing stopping you from
 % using `subcmd' instead of / in addition to ahead-of-time pattern
 % matching, though.
-subcmd(Args, State) ->
-    subcmd(Args, State, #{}).
+'CMD_subcmd'(Args, State) ->
+    do_subcmd(Args, State, #{}).
 
-subcmd([N, Body|SubCmds], State, Acc) ->
+do_subcmd([N, Body|SubCmds], State, Acc) ->
     Name = make_binstring(N),
-    subcmd(SubCmds, State, maps:put(Name, Body, Acc));
-subcmd([], State, Acc) ->
+    do_subcmd(SubCmds, State, maps:put(Name, Body, Acc));
+do_subcmd([], State, Acc) ->
     Dispatcher = fun ([C|Args], SubState) ->
                          Cmd = make_binstring(C),
                          CmdFun = maps:get(Cmd, Acc),
@@ -246,15 +266,15 @@ subcmd([], State, Acc) ->
 % function is meant to be an ordinary Erlang function and is "wrapped"
 % (i.e. the input state and output state are identical, aside from a
 % different `$RETVAL').
-apply([pure, Fun | Args], State) when is_function(Fun) ->
+'CMD_apply'([pure, Fun | Args], State) when is_function(Fun) ->
     RetVal = erlang:apply(Fun, Args),
-    {ok, NewState} = var([<<"RETVAL">>, RetVal], State),
+    {ok, NewState} = 'CMD_var'([<<"RETVAL">>, RetVal], State),
     {RetVal, NewState};
-apply([Fun|Args], State) when is_function(Fun) ->
+'CMD_apply'([Fun|Args], State) when is_function(Fun) ->
     erlang:apply(Fun, [Args, State]);
-apply([N|Args], State) ->
+'CMD_apply'([N|Args], State) ->
     Name = make_binstring(N),
-    case cmd([Name], State) of
+    case 'CMD_cmd'([Name], State) of
         Err = {error, _, _} ->
             Err;
         {Fun, State} ->
@@ -277,7 +297,7 @@ apply([N|Args], State) ->
 %
 % If no argument is passed to `cmd' after the command name, `cmd' will
 % instead return the Erlang function backing that command.
-cmd([N], {Funs, Vars}) ->
+'CMD_cmd'([N], {Funs, Vars}) ->
     Name = make_binstring(N),
     case maps:find(Name, Funs) of
         {ok, Fun} ->
@@ -285,30 +305,30 @@ cmd([N], {Funs, Vars}) ->
         _ ->
             {error, {no_such_fun, Name}, {Funs, Vars}}
     end;
-cmd([N, Fun], {Funs, Vars}) when is_function(Fun) ->
+'CMD_cmd'([N, Fun], {Funs, Vars}) when is_function(Fun) ->
     Name = make_binstring(N),
     {ok, {maps:put(Name, Fun, Funs), Vars}};
-cmd(Args, State) ->
-    cmd(Args, State, []).
+'CMD_cmd'(Args, State) ->
+    do_cmd(Args, State, []).
 
 % cmd's OTPCL-only mode is pretty complicated, since we basically have
 % to write a mini-interpreter specifically for parsing the argspecs.
 
-cmd([N, <<"">>, Body | Clauses], State, Acc) ->
+do_cmd([N, <<"">>, Body | Clauses], State, Acc) ->
     Name = make_binstring(N),
-    cmd([Name, <<"# EMPTY">>, Body | Clauses], State, Acc);
-cmd([N, ArgSpec, Body | Clauses], State, Acc) ->
+    do_cmd([Name, <<"# EMPTY">>, Body | Clauses], State, Acc);
+do_cmd([N, ArgSpec, Body | Clauses], State, Acc) ->
     Name = make_binstring(N),
     {ok, {parsed, program, SubClauses}, []} = otpcl_parse:parse(ArgSpec),
     BuiltSCs = [build_subclause(SC, Body) || SC <- SubClauses],
-    cmd([Name | Clauses], State, BuiltSCs ++ Acc);
-cmd([N], State, Acc) ->
+    do_cmd([Name | Clauses], State, BuiltSCs ++ Acc);
+do_cmd([N], State, Acc) ->
     Name = make_binstring(N),
     Clauses = lists:reverse(Acc),
     % FIXME: use a sane line number here instead of defaulting to line 0.
     Eval = {'fun', 0, {clauses, Clauses}},
     {value, Fun, _} = erl_eval:expr(Eval, []),
-    cmd([Name, Fun], State).
+    'CMD_cmd'([Name, Fun], State).
 
 build_subclause({parsed, comment, _}, Body) ->
     Args = erl_parse:abstract([]),
