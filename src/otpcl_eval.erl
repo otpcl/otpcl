@@ -82,10 +82,16 @@
 
 -include("otpcl.hrl").
 
--export([interpret/1, interpret/2, eval/1, eval/2, eval_file/1, eval_file/2,
-         make_charstring/1, make_binstring/1, make_atomic/1, make_atom/1]).
+-export(['CMD_interpret'/2, interpret/1, interpret/2, 'CMD_eval'/2, eval/1,
+         eval/2, 'CMD_eval_file'/2, eval_file/1, eval_file/2, make_charstring/1,
+         make_binstring/1, make_atomic/1, make_atom/1]).
 
--otpcl_cmds([interpret, eval, eval_file]).
+'CMD_interpret'(Args, State) ->
+    interpret(Args, State).
+'CMD_eval'(Args, State) ->
+    eval(Args, State).
+'CMD_eval_file'(Args, State) ->
+    eval_file(Args, State).
 
 -ifdef(DEBUG).
 -define(DEBUG_PRINT(Msg, Args), io:format(Msg, Args)).
