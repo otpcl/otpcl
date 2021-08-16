@@ -3,6 +3,15 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+minimal_state_test() ->
+    {ok, _S1} = otpcl:eval("", otpcl_env:minimal_state()),
+    ok.
+
+core_state_test() ->
+    {V1, _S1} = otpcl:eval("return foo | return", otpcl_env:core_state()),
+    ?assertEqual(foo, V1),
+    ok.
+
 stringy_test() ->
     {ok, Normal} = otpcl:import(erlang, otpcl_env:core_state()),
     {ok, Stringy} = otpcl:import(erlang, otpcl_env:stringy_state()),
@@ -33,7 +42,7 @@ stringy_switch_test() ->
                           "set post_stringy [is_atom foo]",
                           "return <$pre_stringy $stringy $post_stringy>"],
                          "\n"),
-    {{PreStringy, Stringy, PostStringy}, S0} = otpcl:eval(Script),
+    {{PreStringy, Stringy, PostStringy}, _S0} = otpcl:eval(Script),
     ?assertEqual(PreStringy, true),
     ?assertEqual(Stringy, false),
     ?assertEqual(PostStringy, true),
