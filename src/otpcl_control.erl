@@ -7,15 +7,34 @@
 
 -include("otpcl.hrl").
 
--export(['if'/2, unless/2, for/2, while/2, truthy/1, truthy/2, break/2]).
+-export(['CMD_if'/2, 'if'/2, 'CMD_unless'/2, unless/2, 'CMD_for'/2, for/2,
+         'CMD_while'/2, while/2, 'CMD_truthy'/2, truthy/1, truthy/2,
+         'CMD_break'/2, break/2]).
 
--otpcl_cmds(['if', unless, for, while, truthy, break]).
+'CMD_if'(Args, State) ->
+    'if'(Args, State).
+'CMD_unless'(Args, State) ->
+    unless(Args, State).
+'CMD_for'(Args, State) ->
+    for(Args, State).
+'CMD_while'(Args, State) ->
+    while(Args, State).
+'CMD_truthy'(Args, State) ->
+    truthy(Args, State).
+'CMD_break'(Args, State) ->
+    break(Args, State).
 
 % @doc Evaluates the second argument if the first is "truthy".  If
 % there's a third argument, it'll be evaluated if the first is not
 % "truthy".
 'if'([Test, Then], State) ->
-    'if'([Test, Then, ""], State);
+    case truthy(Test) of
+        false ->
+            otpcl_eval:eval(Then, State);
+        _ ->
+            {RetVal, _} = otpcl_meta:get([<<"RETVAL">>], State),
+            {RetVal, State}
+    end;
 'if'([Test, Then, Else], State) ->
     case truthy(Test) of
         true ->
