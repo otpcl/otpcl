@@ -8,9 +8,12 @@
 
 -include("otpcl.hrl").
 
--export([return/2, '|'/2]).
+-export(['CMD_return'/2, return/2, 'CMD_|'/2, '|'/2]).
 
--otpcl_cmds([return, '|']).
+'CMD_return'(Args, State) ->
+    return(Args, State).
+'CMD_|'(Args, State) ->
+    '|'(Args, State).
 
 -spec return(any(), state()) -> {any(), state()}.
 % @doc Sets `$RETVAL' in the given state.  `$RETVAL' will be set to one of `ok'
