@@ -1,0 +1,5 @@
+import erlang
+
+set foo [binary_to_atom "p"]
+set bar [list_to_atom `p`]
+return <$foo $bar>
