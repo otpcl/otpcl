@@ -257,7 +257,7 @@ prepped_cmds([], Prepped) ->
 'CMD_subcmd'(Args, State) ->
     do_subcmd(Args, State, #{}).
 
-do_subcmd([N, Body|SubCmds], State, Acc) ->
+do_subcmd([N, Body|SubCmds], State, Acc) when is_function(Body) ->
     Name = make_binstring(N),
     do_subcmd(SubCmds, State, maps:put(Name, Body, Acc));
 do_subcmd([], State, Acc) ->
