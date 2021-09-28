@@ -55,5 +55,5 @@ return(Args, State) ->
 % call `foo bar baz |! $pid' to send the result of the command `foo bar baz' as
 % a message to the process identified via `$pid'.
 '|'([Cmd|Args], State) ->
-    {RetVal, State} = otpcl_meta:get(['RETVAL'], State),
-    otpcl_meta:apply([Cmd, RetVal|Args], State).
+    {RetVal, State} = otpcl_meta:get(<<"RETVAL">>, State),
+    otpcl_meta:apply(Cmd, [RetVal|Args], State).

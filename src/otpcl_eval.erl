@@ -172,7 +172,7 @@ make_atom(Tokens, State) ->
 % @doc Determines if the interpreter is "stringy" (i.e. it emits
 % binstrings instead of atoms).
 interpreter_is_stringy(State) ->
-    case otpcl_meta:get([<<"STRINGY_INTERPRETER">>], State) of
+    case otpcl_meta:get(<<"STRINGY_INTERPRETER">>, State) of
         {error, _, _} ->
             false;
         _ ->
@@ -204,7 +204,7 @@ interpret({parsed, var_unquoted, Tokens}, State) ->
 interpret({parsed, var_braced, Tokens}, State) ->
     interpret({parsed, var, Tokens}, State);
 interpret({parsed, var, Tokens}, State) ->
-    {Val, State} = otpcl_meta:get([make_binstring(Tokens)], State),
+    {Val, State} = otpcl_meta:get(make_binstring(Tokens), State),
     Val;
 % FIXME: any state changes here (new/modified functions and variables,
 % for example) won't actually persist beyond a list/tuple/funcall
@@ -215,22 +215,22 @@ interpret({parsed, list, Items}, State) ->
 interpret({parsed, tuple, Items}, State) ->
     list_to_tuple([interpret(I, State) || I <- Items]);
 interpret({parsed, funcall, Words}, State) ->
-    Cmd = [interpret(I, State) || I <- Words],
-    {Res, _} = otpcl_meta:apply(Cmd, State),
+    [Cmd|Args] = [interpret(I, State) || I <- Words],
+    {Res, _} = otpcl_meta:apply(Cmd, Args, State),
     Res;
 interpret({parsed, command, []}, State) ->
-    otpcl_meta:get([<<"RETVAL">>], State);
+    otpcl_meta:get(<<"RETVAL">>, State);
 interpret({parsed, command, Words}, State) ->
-    Cmd = [interpret(I, State) || I <- Words],
-    otpcl_meta:apply(Cmd, State);
+    [Cmd|Args] = [interpret(I, State) || I <- Words],
+    otpcl_meta:apply(Cmd, Args, State);
 interpret({parsed, comment, _}, State) ->
-    otpcl_meta:get([<<"RETVAL">>], State);
+    otpcl_meta:get(<<"RETVAL">>, State);
 interpret({parsed, program, [Cmd|Rest]}, State) ->
     {RetVal, NewState} = interpret(Cmd, State),
-    {ok, RetState} = otpcl_meta:set([<<"RETVAL">>, RetVal], NewState),
+    {ok, RetState} = otpcl_meta:set(<<"RETVAL">>, RetVal, NewState),
     interpret({parsed, program, Rest}, RetState);
 interpret({parsed, program, []}, State) ->
-    otpcl_meta:get([<<"RETVAL">>], State);
+    otpcl_meta:get(<<"RETVAL">>, State);
 interpret({parsed, Type, Data}, State) ->
     {error, {unknown_node_type, Type, Data}, State};
 interpret(InvalidNode, State) ->

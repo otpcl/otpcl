@@ -12,30 +12,41 @@
 
 -include("otpcl.hrl").
 
--export(['CMD_import'/2, import/2, 'CMD_use'/2, use/2, 'CMD_subcmd'/2, subcmd/2,
-         'CMD_cmd'/2, cmd/2, 'CMD_apply'/2, apply/2, 'CMD_get'/2, get/2,
-         'CMD_set'/2, set/2, 'CMD_unset'/2, unset/2, 'CMD_var'/2, var/2]).
+-export(['CMD_import'/2, import/2, import/3, 'CMD_use'/2, use/2, use/3,
+         'CMD_subcmd'/2, subcmd/2, 'CMD_cmd'/2, cmd/2, cmd/3, 'CMD_apply'/2,
+         apply/3, 'CMD_get'/2, get/2, 'CMD_set'/2, set/3, 'CMD_unset'/2,
+         unset/2, 'CMD_var'/2, var/2, var/3]).
 
 % Wrappers
 
-import(Args, State) ->
-    'CMD_import'(Args, State).
-use(Args, State) ->
-    'CMD_use'(Args, State).
+import(Name, State) ->
+    'CMD_import'([Name], State).
+import(Name, Exports, State) ->
+    'CMD_import'([Name|Exports], State).
+use(Name, State) ->
+    'CMD_use'([Name], State).
+use(Name, Alias, State) ->
+    'CMD_use'([Name, <<"as">>, Alias], State).
 subcmd(Args, State) ->
     'CMD_subcmd'(Args, State).
-cmd(Args, State) ->
-    'CMD_cmd'(Args, State).
-apply(Args, State) ->
-    'CMD_apply'(Args, State).
-get(Args, State) ->
-    'CMD_get'(Args, State).
-set(Args, State) ->
-    'CMD_set'(Args, State).
-unset(Args, State) ->
-    'CMD_unset'(Args, State).
-var(Args, State) ->
-    'CMD_var'(Args, State).
+cmd(Name, State) ->
+    'CMD_cmd'([Name], State).
+cmd(Name, Body, State) when is_function(Body) ->
+    'CMD_cmd'([Name, Body], State);
+cmd(Name, Clauses, State) when is_list(Clauses) ->
+    'CMD_cmd'([Name|Clauses], State).
+apply(Fun, Args, State) ->
+    'CMD_apply'([Fun|Args], State).
+get(Name, State) ->
+    'CMD_get'([Name], State).
+set(Name, Value, State) ->
+    'CMD_set'([Name, Value], State).
+unset(Name, State) ->
+    'CMD_unset'([Name], State).
+var(Name, State) ->
+    'CMD_var'([Name], State).
+var(Name, Value, State) ->
+    'CMD_var'([Name, Value], State).
 
 make_binstring(I) when is_atom(I) ->
     atom_to_binary(I);
@@ -253,7 +264,7 @@ do_subcmd([], State, Acc) ->
     Dispatcher = fun ([C|Args], SubState) ->
                          Cmd = make_binstring(C),
                          CmdFun = maps:get(Cmd, Acc),
-                         ?MODULE:apply([CmdFun|Args], SubState)
+                         ?MODULE:apply(CmdFun, Args, SubState)
                  end,
     {Dispatcher, State}.
 

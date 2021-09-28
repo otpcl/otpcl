@@ -13,9 +13,9 @@
 % affect the world beyond the interpreter state).
 default_state() ->
     State0 = core_state(),
-    {ok, State1} = otpcl_meta:import([otpcl_control], State0),
-    {ok, State2} = otpcl_meta:import([otpcl_meta], State1),
-    {ok, State3} = otpcl_meta:import([otpcl_pipes], State2),
+    {ok, State1} = otpcl_meta:import(otpcl_control, State0),
+    {ok, State2} = otpcl_meta:import(otpcl_meta, State1),
+    {ok, State3} = otpcl_meta:import(otpcl_pipes, State2),
     State3.
 
 -spec minimal_state() -> state().
@@ -26,7 +26,7 @@ default_state() ->
 % case the interpreter encounters a program with no commands).
 minimal_state() ->
     State0 = {#{}, #{}},
-    {ok, State1} = otpcl_meta:set([<<"RETVAL">>, ok], State0),
+    {ok, State1} = otpcl_meta:set(<<"RETVAL">>, ok, State0),
     State1.
 
 -spec core_state() -> state().
@@ -44,7 +44,7 @@ minimal_state() ->
 % sufficiently numerous/large/complex OTPCL scripts.
 core_state() ->
     State0 = minimal_state(),
-    {ok, State1} = otpcl_meta:import([otpcl_core], State0),
+    {ok, State1} = otpcl_meta:import(otpcl_core, State0),
     State1.
 
 -spec stringy_state() -> state().
@@ -89,5 +89,5 @@ core_state() ->
 % it to us immediately).
 stringy_state() ->
     State0 = core_state(),
-    {ok, State1} = otpcl_meta:set([<<"STRINGY_INTERPRETER">>, ok], State0),
+    {ok, State1} = otpcl_meta:set(<<"STRINGY_INTERPRETER">>, ok, State0),
     State1.

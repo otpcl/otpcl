@@ -32,7 +32,7 @@
         false ->
             otpcl_eval:eval(Then, State);
         _ ->
-            {RetVal, _} = otpcl_meta:get([<<"RETVAL">>], State),
+            {RetVal, _} = otpcl_meta:get(<<"RETVAL">>, State),
             {RetVal, State}
     end;
 'if'([Test, Then, Else], State) ->
@@ -63,11 +63,11 @@ unless([Test, Then], State) ->
 for([Name, in, Args, Do], State) ->
     for([Name, <<"in">>, Args, Do], State);
 for([Name, <<"in">>, [Each|Rest], Do], State) ->
-    {ok, NewState} = otpcl_meta:set([Name, Each], State),
+    {ok, NewState} = otpcl_meta:set(Name, Each, State),
     {_, NewerState} = otpcl_eval:eval(Do, NewState),
     for([Name, <<"in">>, Rest, Do], NewerState);
 for([_, <<"in">>, [], _], State) ->
-    {RetVal, State} = otpcl_meta:get([<<"RETVAL">>], State),
+    {RetVal, State} = otpcl_meta:get(<<"RETVAL">>, State),
     {RetVal, State}.
 
 % @doc Repeatedly evals the second clause for as long as the first clause
@@ -84,25 +84,25 @@ while([Pred, Do], State) ->
             {_, NewerState} = otpcl_eval:eval(Do, NewState),
             case should_break(NewerState) of
                 true ->
-                    {_, FinalState} = otpcl_meta:unset([<<"BREAK">>],
+                    {_, FinalState} = otpcl_meta:unset(<<"BREAK">>,
                                                        NewerState),
-                    {RetVal, _} = otpcl_meta:get([<<"RETVAL">>], State),
+                    {RetVal, _} = otpcl_meta:get(<<"RETVAL">>, State),
                     {RetVal, FinalState};
                 _ ->
                     while([Pred, Do], NewerState)
             end;
         false ->
-            {RetVal, _} = otpcl_meta:get([<<"RETVAL">>], State),
+            {RetVal, _} = otpcl_meta:get(<<"RETVAL">>, State),
             {RetVal, State}
     end.
 
 break(_, State) ->
-    {RetVal, _} = otpcl_meta:get([<<"RETVAL">>], State),
-    {_, NewState} = otpcl_meta:set([<<"BREAK">>, ok], State),
+    {RetVal, _} = otpcl_meta:get(<<"RETVAL">>, State),
+    {_, NewState} = otpcl_meta:set(<<"BREAK">>, ok, State),
     {RetVal, NewState}.
 
 should_break(State) ->
-    case otpcl_meta:get([<<"BREAK">>], State) of
+    case otpcl_meta:get(<<"BREAK">>, State) of
         {_, State} ->
             true;
         _ ->

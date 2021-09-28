@@ -78,29 +78,29 @@ eval_file(Filename, State) ->
 -spec get(atom(), state()) -> {any(), state()}.
 % @doc Get the value of a variable from an OTPCL interpreter state.
 get(Name, State) ->
-    otpcl_meta:get([Name], State).
+    otpcl_meta:get(Name, State).
 
 -spec set(atom(), any(), state()) -> {'ok', state()}.
 % @doc Set the value of a variable in an OTPCL interpreter state.
 set(Name, Val, State) ->
-    otpcl_meta:set([Name, Val], State).
+    otpcl_meta:set(Name, Val, State).
 
 -spec import(atom(), state()) -> {'ok',state()} | {{'ok',atom()},state()}.
 % @doc Import all the functions from a module into an OTPCL interpreter state.
 import(Module, State) ->
-    otpcl_meta:import([Module], State).
+    otpcl_meta:import(Module, State).
 
 -spec import(atom(), atom(), state()) -> {'ok',state()} | {{'ok',atom()},state()}.
 % @doc Import a specific function from a module into an OTPCL interpreter state.
 import(Module, Fun, State) ->
-    otpcl_meta:import([Module, Fun], State).
+    otpcl_meta:import(Module, [Fun], State).
 
 -spec cmd(atom(), state()) -> {function(), state()}.
 % @doc Get the function backing a command from an OTPCL interpreter state.
 cmd(Name, State) ->
-    otpcl_meta:cmd([Name], State).
+    otpcl_meta:cmd(Name, State).
 
 -spec cmd(atom(), function(), state()) -> {'ok', state()}.
 % @doc Set the function backing a command in an OTPCL interpreter state.
 cmd(Name, Fun, State) ->
-    otpcl_meta:cmd([Name, Fun], State).
+    otpcl_meta:cmd(Name, Fun, State).
