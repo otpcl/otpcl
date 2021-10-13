@@ -32,31 +32,31 @@
 
 -include("otpcl.hrl").
 
--export(['|!'/2, '|&'/2, '||'/2, '|*'/2, '|#'/2, '|#*'/2]).
--otpcl_cmds(['|!', '|&', '||', '|*', '|#', '|#*']).
+-export(['CMD_|!'/2, 'CMD_|&'/2, 'CMD_||'/2, 'CMD_|*'/2, 'CMD_|#'/2,
+         'CMD_|#*'/2]).
 
 % @doc "Send" operator.  Send the previous command's return value to the
 % specified process.
-'|!'([Pid], State) ->
-    {RetVal, State} = otpcl_meta:get(['RETVAL'], State),
+'CMD_|!'([Pid], State) ->
+    {RetVal, State} = otpcl_meta:get(<<"RETVAL">>, State),
     Pid ! RetVal,
     {ok, State}.
 
 % @doc "And Also" operator.  If the previous command returned a "truthy" value,
 % run the arguments as a command.
-'|&'(Args, State) ->
+'CMD_|&'(Args, State) ->
     alsoelse(Args, State, true, false).
 
 % @doc "Or Else" operator.  If the previous command returned a non-"truthy"
 % value, run the arguments as a command.
-'||'(Args, State) ->
+'CMD_||'(Args, State) ->
     alsoelse(Args, State, false, true).
 
 alsoelse([Cmd|Args], State, Also, Else) ->
-    {RetVal, State} = otpcl_meta:get(['RETVAL'], State),
+    {RetVal, State} = otpcl_meta:get(<<"RETVAL">>, State),
     case otpcl_control:truthy(RetVal) of
         Also ->
-            otpcl_meta:apply([Cmd|Args], State);
+            otpcl_meta:apply(Cmd, Args, State);
         Else ->
             {RetVal, State}
     end.
@@ -66,15 +66,15 @@ alsoelse([Cmd|Args], State, Also, Else) ->
 % the rest as its arguments, and run it.  Else, treat the first argument as the
 % command name, pass the list elements as arguments, then pass any other passed
 % arguments as additional arguments, then run the resulting command.
-'|*'(Args, State) ->
-    {RetVal, State} = otpcl_meta:get(['RETVAL'], State),
+'CMD_|*'(Args, State) ->
+    {RetVal, State} = otpcl_meta:get(<<"RETVAL">>, State),
     splat(RetVal, Args, State).
 
 splat([Cmd|Args], [], State) ->
-    otpcl_meta:apply([Cmd|Args], State);
+    otpcl_meta:apply(Cmd, Args, State);
 splat(Args, [NextCmd|NextArgs], State) ->
     NewArgs = Args ++ NextArgs,
-    otpcl_meta:apply([NextCmd|NewArgs], State).
+    otpcl_meta:apply(NextCmd, NewArgs, State).
 
 % @doc "Insert" operator.  Splits its arguments at the specified position,
 % inserts the previous command's return value between them, and invokes the
@@ -88,17 +88,19 @@ splat(Args, [NextCmd|NextArgs], State) ->
 %
 % Note that, for obvious reasons, trying to insert an argument into a position
 % greater than the number of existing arguments will result in an error.
-'|#'([Pos|Args], State) when is_integer(Pos) ->
-    {RetVal, State} = otpcl_meta:get(['RETVAL'], State),
+'CMD_|#'([Pos|Args], State) when is_integer(Pos) ->
+    {RetVal, State} = otpcl_meta:get(<<"RETVAL">>, State),
     insert_splat([RetVal], Pos, Args, State).  % Gotta stay DRY :)
 
+insert_splat([Cmd|Rest], 0, Args, State) ->
+    otpcl_meta:apply(Cmd, Rest ++ Args, State);
 insert_splat(RetVal, Pos, Args, State) when is_integer(Pos) ->
-    {Front, Back} = lists:split(Pos, Args),
-    otpcl_meta:apply(Front ++ RetVal ++ Back, State).
+    {[Cmd|Front], Back} = lists:split(Pos, Args),
+    otpcl_meta:apply(Cmd, Front ++ RetVal ++ Back, State).
 
 % @doc "Insert Splat" operator.  Like `|#`, but expands the previous command's
 % return value during insertion (instead of just inserting the list as a single
 % argument).
-'|#*'([Pos|Args], State) when is_integer(Pos) ->
-    {RetVal, State} = otpcl_meta:get(['RETVAL'], State),
+'CMD_|#*'([Pos|Args], State) when is_integer(Pos) ->
+    {RetVal, State} = otpcl_meta:get(<<"RETVAL">>, State),
     insert_splat(RetVal, Pos, Args, State).
