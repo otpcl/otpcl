@@ -231,6 +231,12 @@ interpret({parsed, program, [Cmd|Rest]}, State) ->
     interpret({parsed, program, Rest}, RetState);
 interpret({parsed, program, []}, State) ->
     otpcl_meta:get(<<"RETVAL">>, State);
+% Potential FIXME: if a program ends with a pipe with no arguments, should the
+% parser really be sending a raw pipe token up to the interpreter?  Or should
+% that properly be a {parsed, command, [Cmd]}?  Handling it here for now.
+interpret({parsed, pipe, [Tokens]}, State) ->
+    Cmd = interpret(Tokens, State),
+    otpcl_meta:apply(Cmd, [], State);
 interpret({parsed, Type, Data}, State) ->
     {error, {unknown_node_type, Type, Data}, State};
 interpret(InvalidNode, State) ->
