@@ -38,25 +38,27 @@ of the above are equivalent to this:</p>
  exists specifically to facilitate this sort of pattern, as exemplified by the
  various commands defined in this here module.
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#%7c%21-2">'|!'/2</a></td><td>"Send" operator.</td></tr>
-<tr><td valign="top"><a href="#%7c%23-2">'|#'/2</a></td><td>"Insert" operator.</td></tr>
-<tr><td valign="top"><a href="#%7c%23%2a-2">'|#*'/2</a></td><td>"Insert Splat" operator.</td></tr>
-<tr><td valign="top"><a href="#%7c%26-2">'|&amp;'/2</a></td><td>"And Also" operator.</td></tr>
-<tr><td valign="top"><a href="#%7c%2a-2">'|*'/2</a></td><td>"Splat" operator.</td></tr>
-<tr><td valign="top"><a href="#%7c%7c-2">'||'/2</a></td><td>"Or Else" operator.</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#CMD_%7c%21-2">'CMD_|!'/2</a></td><td>"Send" operator.</td></tr>
+<tr><td valign="top"><a href="#CMD_%7c%23-2">'CMD_|#'/2</a></td><td>"Insert" operator.</td></tr>
+<tr><td valign="top"><a href="#CMD_%7c%23%2a-2">'CMD_|#*'/2</a></td><td>"Insert Splat" operator.</td></tr>
+<tr><td valign="top"><a href="#CMD_%7c%26-2">'CMD_|&amp;'/2</a></td><td>"And Also" operator.</td></tr>
+<tr><td valign="top"><a href="#CMD_%7c%2a-2">'CMD_|*'/2</a></td><td>"Splat" operator.</td></tr>
+<tr><td valign="top"><a href="#CMD_%7c%7c-2">'CMD_||'/2</a></td><td>"Or Else" operator.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
-<h3 class="function"><a name="%7c%21-2">'|!'/2</a></h3>
+<h3 class="function"><a name="CMD_%7c%21-2">'CMD_|!'/2</a></h3>
 <div class="spec">
-<p><tt>'|!'(X1, State) -&gt; any()</tt></p>
+<p><tt>'CMD_|!'(X1, State) -&gt; any()</tt></p>
+<p> </p>
 </div><p>"Send" operator.  Send the previous command's return value to the
  specified process.</p>
 
-<h3 class="function"><a name="%7c%23-2">'|#'/2</a></h3>
+<h3 class="function"><a name="CMD_%7c%23-2">'CMD_|#'/2</a></h3>
 <div class="spec">
-<p><tt>'|#'(Args, State) -&gt; any()</tt></p>
+<p><tt>'CMD_|#'(Args, State) -&gt; any()</tt></p>
+<p> </p>
 </div><p><p>"Insert" operator.  Splits its arguments at the specified position, 
 inserts the previous command's return value between them, and invokes the 
 resulting list of words as a command.  That is:</p>
@@ -68,31 +70,35 @@ resulting list of words as a command.  That is:</p>
  Note that, for obvious reasons, trying to insert an argument into a position
  greater than the number of existing arguments will result in an error.</p>
 
-<h3 class="function"><a name="%7c%23%2a-2">'|#*'/2</a></h3>
+<h3 class="function"><a name="CMD_%7c%23%2a-2">'CMD_|#*'/2</a></h3>
 <div class="spec">
-<p><tt>'|#*'(Args, State) -&gt; any()</tt></p>
+<p><tt>'CMD_|#*'(Args, State) -&gt; any()</tt></p>
+<p> </p>
 </div><p>"Insert Splat" operator.  Like <code>|#`, but expands the previous command</code>s
  return value during insertion (instead of just inserting the list as a single
  argument).</p>
 
-<h3 class="function"><a name="%7c%26-2">'|&amp;'/2</a></h3>
+<h3 class="function"><a name="CMD_%7c%26-2">'CMD_|&amp;'/2</a></h3>
 <div class="spec">
-<p><tt>'|&amp;'(Args, State) -&gt; any()</tt></p>
+<p><tt>'CMD_|&amp;'(Args, State) -&gt; any()</tt></p>
+<p> </p>
 </div><p>"And Also" operator.  If the previous command returned a "truthy" value,
  run the arguments as a command.</p>
 
-<h3 class="function"><a name="%7c%2a-2">'|*'/2</a></h3>
+<h3 class="function"><a name="CMD_%7c%2a-2">'CMD_|*'/2</a></h3>
 <div class="spec">
-<p><tt>'|*'(Args, State) -&gt; any()</tt></p>
+<p><tt>'CMD_|*'(Args, State) -&gt; any()</tt></p>
+<p> </p>
 </div><p>"Splat" operator.  If the previous command returned a list, and there are
  no words after the "splat", then treat the first element as a command name,
  the rest as its arguments, and run it.  Else, treat the first argument as the
  command name, pass the list elements as arguments, then pass any other passed
  arguments as additional arguments, then run the resulting command.</p>
 
-<h3 class="function"><a name="%7c%7c-2">'||'/2</a></h3>
+<h3 class="function"><a name="CMD_%7c%7c-2">'CMD_||'/2</a></h3>
 <div class="spec">
-<p><tt>'||'(Args, State) -&gt; any()</tt></p>
+<p><tt>'CMD_||'(Args, State) -&gt; any()</tt></p>
+<p> </p>
 </div><p>"Or Else" operator.  If the previous command returned a non-"truthy"
  value, run the arguments as a command.</p>
 <hr>

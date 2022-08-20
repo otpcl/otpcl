@@ -29,26 +29,95 @@
 
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#default_state-0">default_state/0</a></td><td>The default OTPCL interpreter state.</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#core_state-0">core_state/0</a></td><td>A slightly-less-minimal OTPCL interpreter state.</td></tr>
+<tr><td valign="top"><a href="#default_state-0">default_state/0</a></td><td>The default OTPCL interpreter state.</td></tr>
 <tr><td valign="top"><a href="#minimal_state-0">minimal_state/0</a></td><td>A minimal OTPCL interpreter state.</td></tr>
+<tr><td valign="top"><a href="#stringy_state-0">stringy_state/0</a></td><td>A minimal OTPCL interpreter state, designed for "stringy" 
+interpreters.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
+<h3 class="function"><a name="core_state-0">core_state/0</a></h3>
+<div class="spec">
+<p><tt>core_state() -&gt; <a href="#type-state">state()</a></tt><br></p>
+<p> </p>
+</div><p><p>A slightly-less-minimal OTPCL interpreter state.</p>
+
+ <p>Same as <code>minimal_state/0</code>, but with the commands from <code>otpcl_core</code>
+ pre-imported, such that <code>return</code> and <code>|</code> (i.e. the basic pipe) are 
+available.</p>
+
+ This is the recommended starting point for moderate-safety
+ interpreters; it's as safe as it gets if you want to be able to
+ supply Erlang functions to the interpreter without having to write
+ extra wrappers, but it also defaults to being able to create
+ arbitrary atoms, which risks exhausting Erlang's atom supply with
+ sufficiently numerous/large/complex OTPCL scripts.</p>
+
 <h3 class="function"><a name="default_state-0">default_state/0</a></h3>
 <div class="spec">
 <p><tt>default_state() -&gt; <a href="#type-state">state()</a></tt><br></p>
-</div><p>The default OTPCL interpreter state.  Includes all the basics required
- for an (approximately) self-sufficient OTPCL session (i.e. with the
- unrestricted ability to affect the world beyond the interpreter state).</p>
+<p> </p>
+</div><p><p>The default OTPCL interpreter state.</p>
+
+ Includes all the basics required for an (approximately)
+ self-sufficient OTPCL session (i.e. with the unrestricted ability to
+ affect the world beyond the interpreter state).</p>
 
 <h3 class="function"><a name="minimal_state-0">minimal_state/0</a></h3>
 <div class="spec">
 <p><tt>minimal_state() -&gt; <a href="#type-state">state()</a></tt><br></p>
-</div><p>A minimal OTPCL interpreter state.  Includes the absolute bare bones
- necessary for the interpreter to not freak out (namely: setting an initial
- value for <code>$RETVAL</code> in case the interpreter encounters a program with no
- commands).</p>
+<p> </p>
+</div><p><p>A minimal OTPCL interpreter state.</p>
+
+ Includes the absolute bare bones necessary for the interpreter to
+ not freak out (namely: setting an initial value for <code>$RETVAL</code> in
+ case the interpreter encounters a program with no commands).</p>
+
+<h3 class="function"><a name="stringy_state-0">stringy_state/0</a></h3>
+<div class="spec">
+<p><tt>stringy_state() -&gt; <a href="#type-state">state()</a></tt><br></p>
+<p> </p>
+</div><p><p>A minimal OTPCL interpreter state, designed for "stringy" 
+interpreters.</p>
+
+ <p>That is: this state sets a special variable (<code>$STRINGY_INTERPRETER</code>) 
+which tells the OTPCL interpreter to generate (binary) strings 
+whenever it would otherwise dynamically generate an atom or number. 
+This is handy for situations where you want to be able to interpret 
+potentially-adversarial OTPCL code (e.g. entered by users into a 
+web-facing application), since it prevents users from (intentionally 
+or otherwise) blowing out the Erlang runtime's limit on atoms.  It's 
+also handy in general if you don't want OTPCL to be "clever" about 
+argument types, e.g. to reduce having to check for whether a version 
+number is an atom or float (e.g. 1.2 v. 1.2.0).</p>
+
+ <p>Note that any commands invoked while the interpreter is "stringy"
+ will receive strings instead of atoms/integers/floats as arguments;
+ the "stringy" interpreter deliberately makes zero attempt at
+ automatically converting arguments.  OTPCL's builtin commands
+ generally try to be as forgiving as possible when it comes to
+ argument types (converting as necessary), but all bets are off if
+ you're calling Erlang functions as commands, or if you're calling
+ OTPCL commands written by someone else.  It's very likely you'll
+ need to write your own wrappers for such functions rather than
+ relying on OTPCL's normal <code>import</code>/<code>use</code> commands.</p>
+
+ <p>Note also that all bets are off within commands/functions
+ themselves; just because the interpreter itself won't dynamically
+ create atoms doesn't mean the commands you're calling will extend
+ the same courtesy.  For this reason, the "stringy" interpreter state
+ is deliberately barebones (only <code>return</code> and <code>|</code>), and it's up to 
+you to validate the safety of whatever commands you import into this 
+state.</p>
+
+ This is the recommended starting point for maximum-safety
+ interpreters; by default, scripts using this state are unable to
+ "escape" the state, and are unable to exhaust Erlang's atom supply
+ (if either of these prove possible from exactly this state, then
+ that is a Severity 0 bug, and you are strongly encouraged to report
+ it to us immediately).</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>

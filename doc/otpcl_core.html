@@ -34,15 +34,30 @@
 
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#%7c-2">'|'/2</a></td><td>Inline command chaining operator.</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#CMD_return-2">'CMD_return'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#CMD_%7c-2">'CMD_|'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#%7c-2">'|'/2</a></td><td>Inline command chaining operator.</td></tr>
 <tr><td valign="top"><a href="#return-2">return/2</a></td><td>Sets <code>$RETVAL</code> in the given state.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
+<h3 class="function"><a name="CMD_return-2">'CMD_return'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_return'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="CMD_%7c-2">'CMD_|'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_|'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
 <h3 class="function"><a name="%7c-2">'|'/2</a></h3>
 <div class="spec">
 <p><tt>'|'(Args::[any() | [any()]], State::<a href="#type-state">state()</a>) -&gt; {any(), <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p><p>Inline command chaining operator.  Takes the result of the preceding
  command (stored in <code>$RETVAL</code>) and passes it as the first argument to the named 
 command (the rest of the arguments passed being passed through as additional 
@@ -68,6 +83,7 @@ command that sends the result of a command to a process:</p>
 <h3 class="function"><a name="return-2">return/2</a></h3>
 <div class="spec">
 <p><tt>return(Args::any(), State::<a href="#type-state">state()</a>) -&gt; {any(), <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p>Sets <code>$RETVAL</code> in the given state.  <code>$RETVAL</code> will be set to one of <code>ok</code>
  (if passed an empty list), the list element (if passed a single-element list)
  or the given return value as-is (if passed literally anything else).  Because

@@ -115,70 +115,83 @@
 <h3 class="function"><a name="cmd-2">cmd/2</a></h3>
 <div class="spec">
 <p><tt>cmd(Name::atom(), State::<a href="#type-state">state()</a>) -&gt; {function(), <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p>Get the function backing a command from an OTPCL interpreter state.</p>
 
 <h3 class="function"><a name="cmd-3">cmd/3</a></h3>
 <div class="spec">
 <p><tt>cmd(Name::atom(), Fun::function(), State::<a href="#type-state">state()</a>) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p>Set the function backing a command in an OTPCL interpreter state.</p>
 
 <h3 class="function"><a name="eval-1">eval/1</a></h3>
 <div class="spec">
 <p><tt>eval(Src::<a href="#type-eval_input">eval_input()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+<p> </p>
 </div><p>Interpret a (charlist/binary/token) string as an OTPCL program with the
  default starting state.</p>
 
 <h3 class="function"><a name="eval-2">eval/2</a></h3>
 <div class="spec">
 <p><tt>eval(Src::<a href="#type-eval_input">eval_input()</a>, State::<a href="#type-state">state()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+<p> </p>
 </div><p>Interpret a (charlist/binary/token) string as an OTPCL program with a
  custom starting state.</p>
 
 <h3 class="function"><a name="eval_file-1">eval_file/1</a></h3>
 <div class="spec">
 <p><tt>eval_file(Filename::<a href="#type-filename">filename()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+<p> </p>
 </div><p>Interpret the contents of a file as an OTPCL program with the default
  starting state.</p>
 
 <h3 class="function"><a name="eval_file-2">eval_file/2</a></h3>
 <div class="spec">
 <p><tt>eval_file(Filename::<a href="#type-filename">filename()</a>, State::<a href="#type-state">state()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+<p> </p>
 </div><p>Interpret the contents of a file as an OTPCL program with a custom
  starting state.</p>
 
 <h3 class="function"><a name="get-2">get/2</a></h3>
 <div class="spec">
 <p><tt>get(Name::atom(), State::<a href="#type-state">state()</a>) -&gt; {any(), <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p>Get the value of a variable from an OTPCL interpreter state.</p>
 
 <h3 class="function"><a name="import-2">import/2</a></h3>
 <div class="spec">
 <p><tt>import(Module::atom(), State::<a href="#type-state">state()</a>) -&gt; {ok, <a href="#type-state">state()</a>} | {{ok, atom()}, <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p>Import all the functions from a module into an OTPCL interpreter state.</p>
 
 <h3 class="function"><a name="import-3">import/3</a></h3>
 <div class="spec">
 <p><tt>import(Module::atom(), Fun::atom(), State::<a href="#type-state">state()</a>) -&gt; {ok, <a href="#type-state">state()</a>} | {{ok, atom()}, <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p>Import a specific function from a module into an OTPCL interpreter state.</p>
 
 <h3 class="function"><a name="interpret-1">interpret/1</a></h3>
 <div class="spec">
 <p><tt>interpret(Tree::<a href="#type-tree">tree()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+<p> </p>
 </div><p>Interpret an OTPCL parse tree with the default starting state.</p>
 
 <h3 class="function"><a name="interpret-2">interpret/2</a></h3>
 <div class="spec">
 <p><tt>interpret(Tree::<a href="#type-tree">tree()</a>, State::<a href="#type-state">state()</a>) -&gt; <a href="#type-eval_success">eval_success()</a> | <a href="#type-eval_error">eval_error()</a></tt><br></p>
+<p> </p>
 </div><p>Interpret an OTPCL parse tree with a custom starting state.</p>
 
 <h3 class="function"><a name="parse-1">parse/1</a></h3>
 <div class="spec">
 <p><tt>parse(Src::<a href="#type-eval_input">eval_input()</a>) -&gt; <a href="#type-parse_success">parse_success()</a> | <a href="#type-parse_error">parse_error()</a></tt><br></p>
+<p> </p>
 </div><p>Parse a (charlist/binary/token) string as an OTPCL program.</p>
 
 <h3 class="function"><a name="scan-1">scan/1</a></h3>
 <div class="spec">
 <p><tt>scan(Txt::<a href="#type-str_or_bin">str_or_bin()</a>) -&gt; [<a href="#type-token">token()</a>]</tt><br></p>
+<p> </p>
 </div><p>Convert a charlist string or binary string into a token string.  The
  resulting tokens will start from the default starting position
  (<code>{nofile,0,0}</code>).</p>
@@ -186,12 +199,14 @@
 <h3 class="function"><a name="scan-2">scan/2</a></h3>
 <div class="spec">
 <p><tt>scan(Txt::<a href="#type-str_or_bin">str_or_bin()</a>, Pos::<a href="#type-position">position()</a>) -&gt; [<a href="#type-token">token()</a>]</tt><br></p>
+<p> </p>
 </div><p>Convert a charlist string or binary string into a token string.  The
  resulting tokens will start from the starting position <code>Pos</code>.</p>
 
 <h3 class="function"><a name="set-3">set/3</a></h3>
 <div class="spec">
 <p><tt>set(Name::atom(), Val::any(), State::<a href="#type-state">state()</a>) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
 </div><p>Set the value of a variable in an OTPCL interpreter state.</p>
 <hr>
 

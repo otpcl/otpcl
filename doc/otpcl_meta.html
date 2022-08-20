@@ -13,13 +13,16 @@
 <ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>OTPCL meta-commands.
 
 
-<h2><a name="description">Description</a></h2>OTPCL meta-commands.  These commands all pertain to modifying the OTPCL
- interpreter's execution state/environment from within an OTPCL program; if you
- intend for your OTPCL-based DSL or what have you to be Turing-complete, this
- would be the module to either import or reimplement (and likewise, if you
- <em>don't</em> want your OTPCL-based DSL or what have you to be
- Turing-complete - e.g. for restricted/safe configuration files - this would be
- the module to exclude).
+<h2><a name="description">Description</a></h2><p>OTPCL meta-commands.</p>
+
+ These commands all pertain to modifying the OTPCL interpreter's
+ execution state/environment from within an OTPCL program; if you
+ intend for your OTPCL-based DSL or what have you to be
+ Turing-complete, this would be the module to either import or
+ reimplement (and likewise, if you <em>don't</em> want your
+ OTPCL-based DSL or what have you to be Turing-complete - e.g. for
+ restricted/safe configuration files - this would be the module to
+ exclude).
 <h2><a name="types">Data Types</a></h2>
 
 <h3 class="typedecl"><a name="type-funs">funs()</a></h3>
@@ -35,118 +38,238 @@
 
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#apply-2">apply/2</a></td><td>Executes the specified command or function with the given arguments (if
- any).</td></tr>
-<tr><td valign="top"><a href="#cmd-2">cmd/2</a></td><td>Gets or sets the definition for the given command.</td></tr>
-<tr><td valign="top"><a href="#get-2">get/2</a></td><td>Get the value of the named variable.</td></tr>
-<tr><td valign="top"><a href="#import-2">import/2</a></td><td>Imports commands from an Erlang module.</td></tr>
-<tr><td valign="top"><a href="#set-2">set/2</a></td><td>Set the value of the named variable.</td></tr>
-<tr><td valign="top"><a href="#subcmd-2">subcmd/2</a></td><td>Returns a subcommand dispatcher.</td></tr>
-<tr><td valign="top"><a href="#use-2">use/2</a></td><td>Creates a command representing a module.</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#CMD_apply-2">'CMD_apply'/2</a></td><td>Executes the specified command or function with the given 
+arguments (if any).</td></tr>
+<tr><td valign="top"><a href="#CMD_cmd-2">'CMD_cmd'/2</a></td><td>Gets or sets the definition for the given command.</td></tr>
+<tr><td valign="top"><a href="#CMD_get-2">'CMD_get'/2</a></td><td>Get the value of the named variable.</td></tr>
+<tr><td valign="top"><a href="#CMD_import-2">'CMD_import'/2</a></td><td>Imports commands from an Erlang module.</td></tr>
+<tr><td valign="top"><a href="#CMD_set-2">'CMD_set'/2</a></td><td>Set the value of the named variable.</td></tr>
+<tr><td valign="top"><a href="#CMD_subcmd-2">'CMD_subcmd'/2</a></td><td>Returns a subcommand dispatcher.</td></tr>
+<tr><td valign="top"><a href="#CMD_unset-2">'CMD_unset'/2</a></td><td>Unset the named variable, as if it never existed.</td></tr>
+<tr><td valign="top"><a href="#CMD_use-2">'CMD_use'/2</a></td><td>Creates a command representing a module.</td></tr>
+<tr><td valign="top"><a href="#CMD_var-2">'CMD_var'/2</a></td><td>Get (and optionally set) the named variable.</td></tr>
+<tr><td valign="top"><a href="#apply-3">apply/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#cmd-2">cmd/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#cmd-3">cmd/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#get-2">get/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#import-2">import/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#import-3">import/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#set-3">set/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#subcmd-2">subcmd/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#unset-2">unset/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#use-2">use/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#use-3">use/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#var-2">var/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#var-3">var/3</a></td><td></td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
-<h3 class="function"><a name="apply-2">apply/2</a></h3>
+<h3 class="function"><a name="CMD_apply-2">'CMD_apply'/2</a></h3>
 <div class="spec">
-<p><tt>apply(Args, State) -&gt; any()</tt></p>
-</div><p>Executes the specified command or function with the given arguments (if
- any).  If a function, assumes it's able to operate as an OTPCL command (that
- is: it's a 2-arity function that takes a list of arguments and a state).  If
- <code>pure</code> precedes the function, instead assumes that the function is meant to be
- an ordinary Erlang function and is "wrapped" (i.e. the input state and output
- state are identical, aside from a different <code>$RETVAL</code>).</p>
+<p><tt>'CMD_apply'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div><p><p>Executes the specified command or function with the given 
+arguments (if any).</p>
 
-<h3 class="function"><a name="cmd-2">cmd/2</a></h3>
+ If a function, assumes it's able to operate as an OTPCL command
+ (that is: it's a 2-arity function that takes a list of arguments and
+ a state).  If <code>pure</code> precedes the function, instead assumes that the
+ function is meant to be an ordinary Erlang function and is "wrapped"
+ (i.e. the input state and output state are identical, aside from a
+ different <code>$RETVAL</code>).</p>
+
+<h3 class="function"><a name="CMD_cmd-2">'CMD_cmd'/2</a></h3>
 <div class="spec">
-<p><tt>cmd(Args, State) -&gt; any()</tt></p>
-</div><p><p>Gets or sets the definition for the given command.  First argument is the
- command name.  Second argument is either a function (i.e. the kind produced
- via <code>fun</code> in Erlang or OTPCL; this function should be a 2-arity function 
-accepting a list of arguments and a 2-element tuple of maps) or the argument 
-list for the first of one or more pairs of argument lists and command bodies. 
-Like Erlang functions, OTPCL commands support multiple definitions via pattern 
-matching; unlike Erlang functions, they lack a concept of "arity", and also do 
-not currently support guards (though this will hopefully be fixed in future 
-versions of OTPCL).</p>
+<p><tt>'CMD_cmd'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div><p><p>Gets or sets the definition for the given command.</p>
 
- If no argument is passed to <code>cmd</code> after the command name, <code>cmd</code> will instead
- return the Erlang function backing that command.</p>
+ <p>First argument is the command name.  Second argument is either a
+ function (i.e. the kind produced via <code>fun</code> in Erlang or OTPCL; this 
+function should be a 2-arity function accepting a list of arguments 
+and an OTPCL state) or the argument list for the first of one or 
+more pairs of argument lists and command bodies.  Like Erlang 
+functions, OTPCL commands support multiple definitions via pattern 
+matching; unlike Erlang functions, they lack a concept of "arity", 
+and also do not currently support guards (though this will hopefully 
+be fixed in future versions of OTPCL).</p>
 
-<h3 class="function"><a name="get-2">get/2</a></h3>
+ <p>If no argument is passed to <code>cmd</code> after the command name, <code>cmd</code> will 
+instead return the Erlang function backing that command.</p>
+
+ (<strong>Warning for "stringy" interpreter users:</strong> this
+ command dynamically creates atoms!)</p>
+
+<h3 class="function"><a name="CMD_get-2">'CMD_get'/2</a></h3>
 <div class="spec">
-<p><tt>get(X1, X2) -&gt; any()</tt></p>
-</div><p>Get the value of the named variable.  Mostly useless from within OTPCL,
- but quite handy when manipulating OTPCL states from within Erlang or some
- other situation external to OTPCL.</p>
+<p><tt>'CMD_get'(X1, X2) -&gt; any()</tt></p>
+<p> </p>
+</div><p><p>Get the value of the named variable.</p>
 
-<h3 class="function"><a name="import-2">import/2</a></h3>
+ Mostly useless from within OTPCL, but quite handy when manipulating
+ OTPCL states from within Erlang or some other situation external to
+ OTPCL.</p>
+
+<h3 class="function"><a name="CMD_import-2">'CMD_import'/2</a></h3>
 <div class="spec">
-<p><tt>import(X1::[atom(), ...], State::<a href="#type-state">state()</a>) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
-</div><p><p>Imports commands from an Erlang module.  Will import either all commands
- (if only a module name is provided) or specifically-named commands (if any are
- passed after the module name).  If the module includes an <code>-otpcl_cmds</code> 
-attribute with a list of command names (corresponding to 2-arity functions in 
-that module), OTPCL will import these functions (and only these functions) as 
-OTPCL commands outright (that is: it will assume that the module has 
-such-named 2-arity functions exported/defined, and that those functions each 
-accept a parameter list + state and return a tuple with a return value + 
-state); else, OTPCL will "wrap" each imported function in a command that 
-simply calls that function with the provided arguments and returns the result 
-(without touching the input state).</p>
+<p><tt>'CMD_import'(Names, State) -&gt; any()</tt></p>
+<p> </p>
+</div><p><p>Imports commands from an Erlang module.</p>
 
- <p>Either mode of operation can be forced by passing either <code>otpcl</code> or <code>erlang</code>
- (respectively) before the module name.  Note that <code>otpcl</code> is the default for
- importing a whole module, while <code>erlang</code> is the default for importing specific
- functions.  Also note that OTPCL doesn't really have a concept of "arity" (at
- least in the "<code>foo/1</code> and <code>foo/2</code> are different functions" sense), so if your
- module <code>foo</code> defines <code>bar/1</code> and <code>bar/2</code>, <code>import foo bar</code> will create a <code>bar</code> 
-command that wraps both.</p>
+ <p>Will import either all commands (if only a module name is provided)
+ or specifically-named commands (if any are passed after the module
+ name).  If an exported function's name starts with <code>CMD_</code>, <code>import</code>
+ will treat that function as a proper state-altering OTPCL command
+ named after whatever follows that prefix (e.g. <code>CMD_foo</code> becomes
+ <code>foo</code>).  Otherwise, <code>import</code> will treat that function as an ordinary 
+Erlang function, creating an OTPCL command with the same name.</p>
 
  <p>To summarize:</p>
 
  <pre> import foo                # imports everything in module foo
- import foo bar baz        # imports bar and baz from foo
- import otpcl foo bar baz  # forcibly treats bar and baz as OTPCL commands
- import erlang foo bar baz # forcibly treats bar and baz as Erlang functions</pre>
+ import foo bar baz        # imports only bar and baz from foo</pre>
 
- It's usually preferable to choose <code>use</code> over <code>import</code>, since <code>use</code> avoids
- namespace clashes.  Both mechanisms are provided, though, for those who prefer
- brevity.</p>
+ <p>It's usually preferable to choose <code>use</code> over <code>import</code>, since <code>use</code> 
+avoids namespace clashes.  Both mechanisms are provided, though, for 
+those who prefer brevity.</p>
 
-<h3 class="function"><a name="set-2">set/2</a></h3>
+ (<strong>Warning for "stringy" interpreter users:</strong> this
+ command dynamically creates atoms!)</p>
+
+<h3 class="function"><a name="CMD_set-2">'CMD_set'/2</a></h3>
 <div class="spec">
-<p><tt>set(X1, X2) -&gt; any()</tt></p>
+<p><tt>'CMD_set'(X1, X2) -&gt; any()</tt></p>
+<p> </p>
 </div><p>Set the value of the named variable.</p>
+
+<h3 class="function"><a name="CMD_subcmd-2">'CMD_subcmd'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_subcmd'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div><p><p>Returns a subcommand dispatcher.  The resulting function (when 
+set as a command) will treat the first argument as a subcommand 
+name, look it up against an internal dictionary of subcommand names, 
+and execute the corresponding subcommand function.</p>
+
+ Note that this is not strictly necessary in order to implement
+ commands that use the subcommand pattern; OTPCL, like any good child
+ of Erlang, will happily let you do the same thing ahead-of-time by
+ allowing you to specify multiple argument specs and pattern match
+ against the subcommand names.  <code>subcmd</code> is more intended for dynamic
+ generation of subcommand dispatchers (e.g. for the <code>use</code> command in
+ this very module).  There's certainly nothing stopping you from
+ using <code>subcmd</code> instead of / in addition to ahead-of-time pattern
+ matching, though.</p>
+
+<h3 class="function"><a name="CMD_unset-2">'CMD_unset'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_unset'(X1, X2) -&gt; any()</tt></p>
+<p> </p>
+</div><p>Unset the named variable, as if it never existed.</p>
+
+<h3 class="function"><a name="CMD_use-2">'CMD_use'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_use'(X1, State) -&gt; any()</tt></p>
+<p> </p>
+</div><p><p>Creates a command representing a module.</p>
+
+ <p>The generated command will dispatch subcommands against the list of 
+exported functions in the module (i.e. each function becomes a 
+subcommand of the final command).  To summarize:</p>
+
+ <pre> use foo         # create command foo with foo's funs as subcommands
+ use foo as bar  # create command bar with foo's funs as subcommands</pre>
+
+ (<strong>Warning for "stringy" interpreter users:</strong> this
+ command dynamically creates atoms!)</p>
+
+<h3 class="function"><a name="CMD_var-2">'CMD_var'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_var'(X1, X2) -&gt; any()</tt></p>
+<p> </p>
+</div><p><p>Get (and optionally set) the named variable.</p>
+
+ If setting a new value for an existing variable, this will return
+ the old value (else, it'll return <code>ok</code>).</p>
+
+<h3 class="function"><a name="apply-3">apply/3</a></h3>
+<div class="spec">
+<p><tt>apply(Fun, Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="cmd-2">cmd/2</a></h3>
+<div class="spec">
+<p><tt>cmd(Name, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="cmd-3">cmd/3</a></h3>
+<div class="spec">
+<p><tt>cmd(Name, Body, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="get-2">get/2</a></h3>
+<div class="spec">
+<p><tt>get(Name, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="import-2">import/2</a></h3>
+<div class="spec">
+<p><tt>import(Name::[atom(), ...], State::<a href="#type-state">state()</a>) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="import-3">import/3</a></h3>
+<div class="spec">
+<p><tt>import(Name, Exports, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="set-3">set/3</a></h3>
+<div class="spec">
+<p><tt>set(Name, Value, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
 
 <h3 class="function"><a name="subcmd-2">subcmd/2</a></h3>
 <div class="spec">
 <p><tt>subcmd(Args, State) -&gt; any()</tt></p>
-</div><p><p>Returns a subcommand dispatcher.  The resulting function (when set as a 
-command) will treat the first argument as a subcommand name, look it up 
-against an internal dictionary of subcommand names, and execute the 
-corresponding subcommand function.</p>
+<p> </p>
+</div>
 
- Note that this is not strictly necessary in order to implement commands that
- use the subcommand pattern; OTPCL, like any good child of Erlang, will happily
- let you do the same thing ahead-of-time by allowing you to specify multiple
- argument specs and pattern match against the subcommand names.  <code>subcmd</code> is
- more intended for dynamic generation of subcommand dispatchers (e.g. for the
- <code>use</code> command in this very module).  There's certainly nothing stopping you
- from using <code>subcmd</code> instead of / in addition to ahead-of-time pattern
- matching, though.</p>
+<h3 class="function"><a name="unset-2">unset/2</a></h3>
+<div class="spec">
+<p><tt>unset(Name, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
 
 <h3 class="function"><a name="use-2">use/2</a></h3>
 <div class="spec">
-<p><tt>use(X1, State) -&gt; any()</tt></p>
-</div><p><p>Creates a command representing a module.  The generated command will 
-dispatch subcommands against the list of exported functions in the module 
-(i.e. each function becomes a subcommand of the final command).  To summarize:</p>
+<p><tt>use(Name, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
 
- <pre> use foo         # create command foo with foo's funs as subcommands
- use foo as bar  # create command bar with foo's funs as subcommands
- use otpcl foo   # forcibly treat all subcommand funs as OTPCL-aware
- use erlang foo  # forcibly treat all subcommand funs as non-OTPCL-aware</pre></p>
+<h3 class="function"><a name="use-3">use/3</a></h3>
+<div class="spec">
+<p><tt>use(Name, Alias, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="var-2">var/2</a></h3>
+<div class="spec">
+<p><tt>var(Name, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="var-3">var/3</a></h3>
+<div class="spec">
+<p><tt>var(Name, Value, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>

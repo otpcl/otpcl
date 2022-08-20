@@ -15,48 +15,107 @@
 
 <h2><a name="description">Description</a></h2><p>OTPCL flow control commands</p>
 
- Following Tcl's tradition, OTPCL's flow control "structures" are essentially
- just commands that take strings and evaluate them in various ways.  Said
- commands' definitions live in this here module.
+ Following Tcl's tradition, OTPCL's flow control "structures" are
+ essentially just commands that take strings and evaluate them in
+ various ways.  Said commands' definitions live in this here module.
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#if-2">'if'/2</a></td><td>Evaluates the second argument if the first is "truthy".</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#CMD_break-2">'CMD_break'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#CMD_for-2">'CMD_for'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#CMD_if-2">'CMD_if'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#CMD_truthy-2">'CMD_truthy'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#CMD_unless-2">'CMD_unless'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#CMD_while-2">'CMD_while'/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#if-2">'if'/2</a></td><td>Evaluates the second argument if the first is "truthy".</td></tr>
+<tr><td valign="top"><a href="#break-2">break/2</a></td><td></td></tr>
 <tr><td valign="top"><a href="#for-2">for/2</a></td><td>Repeatedly evals the given clause with values from a list.</td></tr>
 <tr><td valign="top"><a href="#truthy-1">truthy/1</a></td><td>See <code>truthy/2</code>.</td></tr>
 <tr><td valign="top"><a href="#truthy-2">truthy/2</a></td><td>Determine if a value is "truthy".</td></tr>
 <tr><td valign="top"><a href="#unless-2">unless/2</a></td><td>Inverse of <code>if</code>.</td></tr>
-<tr><td valign="top"><a href="#while-2">while/2</a></td><td>Repeatedly evals the second clause for as long as the first clause
- evaluates to a truthy value.</td></tr>
+<tr><td valign="top"><a href="#while-2">while/2</a></td><td>Repeatedly evals the second clause for as long as the first clause 
+evaluates to a truthy value.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
+<h3 class="function"><a name="CMD_break-2">'CMD_break'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_break'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="CMD_for-2">'CMD_for'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_for'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="CMD_if-2">'CMD_if'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_if'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="CMD_truthy-2">'CMD_truthy'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_truthy'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="CMD_unless-2">'CMD_unless'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_unless'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
+<h3 class="function"><a name="CMD_while-2">'CMD_while'/2</a></h3>
+<div class="spec">
+<p><tt>'CMD_while'(Args, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
+
 <h3 class="function"><a name="if-2">'if'/2</a></h3>
 <div class="spec">
 <p><tt>'if'(X1, State) -&gt; any()</tt></p>
-</div><p>Evaluates the second argument if the first is "truthy".  If there's a
- third argument, it'll be evaluated if the first is not "truthy".</p>
+<p> </p>
+</div><p>Evaluates the second argument if the first is "truthy".  If
+ there's a third argument, it'll be evaluated if the first is not
+ "truthy".</p>
+
+<h3 class="function"><a name="break-2">break/2</a></h3>
+<div class="spec">
+<p><tt>break(X1, State) -&gt; any()</tt></p>
+<p> </p>
+</div>
 
 <h3 class="function"><a name="for-2">for/2</a></h3>
 <div class="spec">
 <p><tt>for(X1, State) -&gt; any()</tt></p>
-</div><p><p>Repeatedly evals the given clause with values from a list.  Synopsis:</p>
+<p> </p>
+</div><p><p>Repeatedly evals the given clause with values from a list.</p>
+
+ <p>Synopsis:</p>
 
  <pre> for each in $list { mangle $each }</pre>
 
- <code>each</code> here could be literally any variable name.  Return value will be the
- value returned by the last invocation/evaluation of the body clause.</p>
+ <code>each</code> here could be literally any variable name.  Return value will
+ be the value returned by the last invocation/evaluation of the body
+ clause.</p>
 
 <h3 class="function"><a name="truthy-1">truthy/1</a></h3>
 <div class="spec">
 <p><tt>truthy(T) -&gt; any()</tt></p>
+<p> </p>
 </div><p>See <code>truthy/2</code>.</p>
 
 <h3 class="function"><a name="truthy-2">truthy/2</a></h3>
 <div class="spec">
 <p><tt>truthy(X1, State) -&gt; any()</tt></p>
-</div><p><p>Determine if a value is "truthy".  All values are deemed to be "truthy" 
-(that is: will cause a control command's predicate to be treated as "true" 
-unless they are in any of the following categories:</p>
+<p> </p>
+</div><p><p>Determine if a value is "truthy".</p>
+
+ <p>All values are deemed to be "truthy" (that is: will cause a control 
+command's predicate to be treated as "true") unless they are in any 
+of the following categories:</p>
 
  <ul>
  <li>An empty list, tuple, or binary</li>
@@ -68,17 +127,22 @@ unless they are in any of the following categories:</p>
 <h3 class="function"><a name="unless-2">unless/2</a></h3>
 <div class="spec">
 <p><tt>unless(X1, State) -&gt; any()</tt></p>
-</div><p>Inverse of <code>if</code>.  Does not accept a third clause, thus disallowing
- "unless/else" constructs (if you want those, go back to Perl -- and I say this
- as someone who loves Perl).</p>
+<p> </p>
+</div><p>Inverse of <code>if</code>.  Does not accept a third clause, thus
+ disallowing "unless/else" constructs (if you want those, go back to
+ Perl -- and I say this as someone who loves Perl).</p>
 
 <h3 class="function"><a name="while-2">while/2</a></h3>
 <div class="spec">
 <p><tt>while(X1, State) -&gt; any()</tt></p>
-</div><p>Repeatedly evals the second clause for as long as the first clause
- evaluates to a truthy value.  Word of caution: OTPCL currently lacks the
- concept of a <code>break</code> statement, so if you ain't careful here you'll end up
- with an infinitely-looping OTPCL interpreter (TODO: fix that).</p>
+<p> </p>
+</div><p><p>Repeatedly evals the second clause for as long as the first clause 
+evaluates to a truthy value.</p>
+
+ If you want to break out of the loop prematurely, use the <code>break</code>
+ command or set the <code>$BREAK</code> variable to any value (which is what
+ <code>break</code> does); <code>while</code> will pick this up, unset <code>$BREAK</code>, and
+ immediately exit the loop.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>

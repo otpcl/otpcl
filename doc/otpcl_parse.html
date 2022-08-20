@@ -186,22 +186,26 @@ Erlang-oriented infrastructure), but it works well enough for now.</p>
 <h3 class="function"><a name="initpos-0">initpos/0</a></h3>
 <div class="spec">
 <p><tt>initpos() -&gt; <a href="#type-position">position()</a></tt><br></p>
+<p> </p>
 </div><p>Column 0 of row 0 of file <code>nofile</code>.</p>
 
 <h3 class="function"><a name="initpos-1">initpos/1</a></h3>
 <div class="spec">
 <p><tt>initpos(Filename::any()) -&gt; <a href="#type-position">position()</a></tt><br></p>
+<p> </p>
 </div><p>Column 0 of row 0 of file <code>File</code>.</p>
 
 <h3 class="function"><a name="parse-1">parse/1</a></h3>
 <div class="spec">
 <p><tt>parse(Input::<a href="#type-str_or_bin">str_or_bin()</a>) -&gt; <a href="#type-parse_success">parse_success()</a> | <a href="#type-parse_error">parse_error()</a></tt><br></p>
+<p> </p>
 </div><p>Like parse/2, but defaulting to <code>program</code> as the toplevel parse tree
  element.</p>
 
 <h3 class="function"><a name="parse-2">parse/2</a></h3>
 <div class="spec">
 <p><tt>parse(Lvls::[<a href="#type-level">level()</a>, ...], Input::<a href="#type-str_or_bin">str_or_bin()</a>) -&gt; <a href="#type-parse_success">parse_success()</a> | <a href="#type-parse_error">parse_error()</a></tt><br></p>
+<p> </p>
 </div><p>Attempts to parse either a string or token list.  Returns either a
  success response <code>{ok, Tree, Rem}</code> (where <code>Tree</code> is an OTPCL parse tree and
  <code>Rem</code> is whatever characters were left over</p>
@@ -209,11 +213,13 @@ Erlang-oriented infrastructure), but it works well enough for now.</p>
 <h3 class="function"><a name="scan-1">scan/1</a></h3>
 <div class="spec">
 <p><tt>scan(Txt::<a href="#type-str_or_bin">str_or_bin()</a>) -&gt; [<a href="#type-token">token()</a>]</tt><br></p>
+<p> </p>
 </div><p>Converts a string into a list of tokens.</p>
 
 <h3 class="function"><a name="scan-2">scan/2</a></h3>
 <div class="spec">
 <p><tt>scan(Txt::<a href="#type-str_or_bin">str_or_bin()</a>, Pos::<a href="#type-position">position()</a>) -&gt; [<a href="#type-token">token()</a>]</tt><br></p>
+<p> </p>
 </div><p>Converts a string into a list of tokens, starting at the specified
  position.</p>
 <hr>
