@@ -114,16 +114,10 @@
 make_charstring(Tokens) ->
     [C || {C,_} <- Tokens].
 
-make_charstring(Tokens, _State) ->
-    make_charstring(Tokens).
-
 -spec make_binstring([token()]) -> binary().
 % @doc Extract a binary string from a token string.
 make_binstring(Tokens) ->
     list_to_binary(make_charstring(Tokens)).
-
-make_binstring(Tokens, _State) ->
-    make_binstring(Tokens).
 
 -spec make_atomic([token()]) -> atom() | integer() | float().
 % @doc Extract a float, integer, or atom (in order of preference) from
