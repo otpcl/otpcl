@@ -67,7 +67,7 @@ eval(State, Tree) ->
 %% Prompts.
 
 ps1(State) ->
-    case otpcl_meta:get(['PS1'], State) of
+    case otpcl_meta:get('PS1', State) of
         {Prompt, State} ->
             Prompt;
         _ ->
@@ -75,7 +75,7 @@ ps1(State) ->
     end.
 
 ps2(State) ->
-    case otpcl_meta:get(['PS2'], State) of
+    case otpcl_meta:get('PS2', State) of
         {Prompt, State} ->
             Prompt;
         _ ->
@@ -113,7 +113,7 @@ show_trace_locs([]) ->
 % @doc Given an input state, returns an output state with pre-imported shell
 % commands and sensible default prompts.
 shell_init_state(State0) ->
-    {_, State1} = otpcl_meta:import([otpcl_shell], State0),
-    {_, State2} = otpcl_meta:set(['PS1', "otpcl> "], State1),
-    {_, State3} = otpcl_meta:set(['PS2', "  ...> "], State2),
+    {_, State1} = otpcl_meta:import(otpcl_shell, State0),
+    {_, State2} = otpcl_meta:set('PS1', "otpcl> ", State1),
+    {_, State3} = otpcl_meta:set('PS2', "  ...> ", State2),
     State3.
