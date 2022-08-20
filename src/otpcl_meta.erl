@@ -432,4 +432,4 @@ build_match_right(VarName, StateIdx) ->
     {call, 1, FunRef, Args}.
 
 state_name(StateIdx) ->
-    list_to_atom("State" ++ integer_to_list(StateIdx)).
+    make_atom("State" ++ integer_to_list(StateIdx)).
