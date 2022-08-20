@@ -125,13 +125,13 @@ make_existing_atom(I) when is_atom(I) ->
 -spec import([atom(), ...], state()) -> {'ok', state()}.
 % @doc Imports commands from an Erlang module.
 %
-% Will import either all commands (if only a module name is provided) or
-% specifically-named commands (if any are passed after the module name).  If an
-% exported function's name starts with `CMD_', `import' will treat that function
-% as a proper state-altering OTPCL command named after whatever follows that
-% prefix (e.g. `CMD_foo' becomes `foo').  Otherwise, `import' will treat that
-% function as an ordinary Erlang function, creating an OTPCL command with the
-% same name.
+% Will import either all commands (if only a module name is provided)
+% or specifically-named commands (if any are passed after the module
+% name).  If an exported function's name starts with `CMD_', `import'
+% will treat that function as a proper state-altering OTPCL command
+% named after whatever follows that prefix (e.g. `CMD_foo' becomes
+% `foo').  Otherwise, `import' will treat that function as an ordinary
+% Erlang function, creating an OTPCL command with the same name.
 %
 % To summarize:
 %
@@ -220,10 +220,10 @@ deduped_cmds(Cmds) ->
                   end,
     {OtpclCmds, ErlangCmds} = lists:partition(Partitioner, Cmds),
     OtpclNames = [Name || {_, Name, _} <- OtpclCmds],
-    % If there's an OTPCL command and an Erlang function with the same command
-    % name, the former takes precedence - e.g. if the module exports 'CMD_foo/2'
-    % and 'foo/1', then 'CMD_foo/2' will become the 'foo' command provided to
-    % the output state from import/use.
+    % If there's an OTPCL command and an Erlang function with the same
+    % command name, the former takes precedence - e.g. if the module
+    % exports 'CMD_foo/2' and 'foo/1', then 'CMD_foo/2' will become
+    % the 'foo' command provided to the output state from import/use.
     Keeper = fun ({erlang, Name, _}) ->
                       not lists:member(Name, OtpclNames)
              end,
@@ -310,7 +310,7 @@ do_subcmd([], State, Acc) ->
 % instead return the Erlang function backing that command.
 %
 % (<strong>Warning for "stringy" interpreter users:</strong> this
-% command dynamically creates atoms!
+% command dynamically creates atoms!)
 'CMD_cmd'([N], {Funs, Vars}) ->
     Name = make_binstring(N),
     case maps:find(Name, Funs) of
