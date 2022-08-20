@@ -308,6 +308,9 @@ do_subcmd([], State, Acc) ->
 %
 % If no argument is passed to `cmd' after the command name, `cmd' will
 % instead return the Erlang function backing that command.
+%
+% (<strong>Warning for "stringy" interpreter users:</strong> this
+% command dynamically creates atoms!
 'CMD_cmd'([N], {Funs, Vars}) ->
     Name = make_binstring(N),
     case maps:find(Name, Funs) of
